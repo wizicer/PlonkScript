@@ -141,6 +141,7 @@
           expand-separator
           icon="fingerprint"
           label="Proof"
+          v-if="proof?.proof"
         >
           <!-- header-class="text-green" -->
           <q-card>

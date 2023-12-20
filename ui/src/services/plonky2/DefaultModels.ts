@@ -17,7 +17,7 @@ export interface Plonky2Data {
   type: 'Plonky2Data';
   witness: Witness;
   data: CircuitData;
-  proof: Plonky2Proof;
+  proof?: Plonky2Proof;
 }
 
 export interface CircuitData {
@@ -231,6 +231,6 @@ export interface RowFieldWithPosition extends RowField {
   raw_index: number;
   representative_map: number;
   representative_value: WitnessValue;
-  row:number;
-  col:number;
+  row: number;
+  col: number;
 }
