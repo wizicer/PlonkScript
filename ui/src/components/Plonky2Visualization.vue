@@ -199,7 +199,10 @@
                             .evals_proofs"
                           :key="j"
                         >
-                          Path?:
+                          {{
+                            initial_trees_proof_evals_proofs_names[j]
+                          }}
+                          leafs: [{{ ep[0].length }}]
                           <array-chips :data="ep[0]" />
                           <!-- <h6 class="props">Siblings</h6> -->
                           Siblings:<br />
@@ -324,6 +327,13 @@ const rows: Ref<Record<string, RowFieldWithPosition>[]> = ref([]);
 const witness: Ref<Witness | undefined> = ref(undefined);
 const circuit: Ref<CircuitData | undefined> = ref(undefined);
 const proof: Ref<Plonky2Proof | undefined> = ref(undefined);
+
+const initial_trees_proof_evals_proofs_names = [
+  'constants_sigmas',
+  'wires',
+  'zs_partial',
+  'quotient',
+];
 
 function loadData(data?: Plonky2Data) {
   if (!data) {
