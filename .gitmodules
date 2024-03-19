@@ -1,3 +1,6 @@
 [submodule "vendor/halo2"]
 	path = vendor/halo2
 	url = git@github.com:zcash/halo2.git
+[submodule "vendor/plonky2"]
+	path = vendor/plonky2
+	url = git@github.com:0xPolygonZero/plonky2.git
