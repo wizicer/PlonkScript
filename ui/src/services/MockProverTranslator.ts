@@ -48,7 +48,9 @@ export function convertMockProverOutputToJson(content: string): string {
   );
 
   // special case for Plonky2 data
+  content = content.replaceAll(/_phantom: (PhantomData)<(.*)> \}\<.*\>,/g, '"_phantom": "$1" },');
   content = content.replaceAll(/([\w\d]+)\((PhantomData)<(.*)>\)<(.*)=(.*)>,/g, '{ "type": "$1", "$2": "$3", "$4": "$5" },');
+  content = content.replaceAll(/_phantom: (PhantomData)<(.*)>/g, '"_phantom": "$1"');
   content = content.replaceAll(/([\w\d_]+)\s*{\s([\w\d_]+:\s*[\w\d\"_\']+,?\s)+}\s*\+\s*([\w\d_]+)\s*:\s*([\w\d_\"\']),/g, '$1 { $2,\n$3: $4 },');
 
 
