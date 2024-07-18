@@ -326,6 +326,7 @@ const rows: Ref<Record<string, RowFieldWithPosition>[]> = ref([]);
 const witness: Ref<Witness | undefined> = ref(undefined);
 const circuit: Ref<CircuitData | undefined> = ref(undefined);
 const proof: Ref<Plonky2Proof | undefined> = ref(undefined);
+const isTooBig = ref(false);
 
 const initial_trees_proof_evals_proofs_names = [
   'constants_sigmas',
@@ -340,6 +341,10 @@ function loadData(data?: Plonky2Data) {
     return;
   }
   console.log(data);
+  if (Number(data.witness.degree) > 1024) {
+    isTooBig.value = true;
+    return;
+  }
   witness.value = data.witness;
   circuit.value = data.data;
   proof.value = data.proof;
