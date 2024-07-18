@@ -199,9 +199,7 @@
                             .evals_proofs"
                           :key="j"
                         >
-                          {{
-                            initial_trees_proof_evals_proofs_names[j]
-                          }}
+                          {{ initial_trees_proof_evals_proofs_names[j] }}
                           leafs: [{{ ep[0].length }}]
                           <array-chips :data="ep[0]" />
                           <!-- <h6 class="props">Siblings</h6> -->
@@ -239,6 +237,7 @@
         dense
         :pagination="pagination"
         :hide-pagination="rows.length <= MAXROWS"
+        class="float-left"
       >
         <template v-slot:body-cell-index="props">
           <q-td>
