@@ -68,7 +68,7 @@ pub struct SimplifiedConstraitSystem {
     pub columns: Vec<Column>,
     pub regions: Vec<Region>,
     pub instance_count: i64,
-    pub gates: Vec<(String, CellExpression)>,
+    pub gates: Vec<(String, String, Column, CellExpression)>,// name, expression string(key), column, expression
     pub inputs: Lazy<HashMap<String, String>>,
     pub cells: Lazy<HashMap<String, Cell>>,
 }

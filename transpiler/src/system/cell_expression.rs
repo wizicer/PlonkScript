@@ -129,8 +129,34 @@ impl ToValueString for CellExpression {
     }
 }
 
+impl ToString for CellExpression {
+    fn to_string(&self) -> String {
+        match self {
+            CellExpression::Constant(c) => c.clone(),
+            CellExpression::CellValue(c) => match c.column.ctype {
+                crate::system::ColumnType::Selector => todo!(),
+                crate::system::ColumnType::Advice => c.column.name.clone(),
+                crate::system::ColumnType::Fixed => c.column.name.clone(),
+                crate::system::ColumnType::Instance => todo!(),
+            },
+            CellExpression::Negated(n) => {
+                format!("-({})", n.to_string())
+            }
+            CellExpression::Product(a, b) => {
+                format!("({}) . ({})", a.to_string(), b.to_string())
+            }
+            CellExpression::Sum(a, b) => {
+                format!("({}) + ({})", a.to_string(), b.to_string())
+            }
+            CellExpression::Scaled(a, b) => {
+                format!("({}) x ({})", a.to_string(), b.to_string())
+            }
+        }
+    }
+}
+
 #[test]
-fn test_convert_to_value() {
+fn test_convert_cell_expression_to_value() {
     let a = "0x0000000000000000000000000000000000000000000000000000000000000002".to_string();
     let b = "0x0000000000000000000000000000000000000000000000000000000000002002".to_string();
     assert_eq!(
@@ -157,5 +183,36 @@ fn test_convert_to_value() {
     assert_eq!(
         Some("0x40000000000000000000000000000000224698fc094cf91b992d30ecffffffff".to_string()),
         (CellExpression::Negated(Box::new(CellExpression::Constant(a.clone())))).to_value_string()
+    );
+}
+
+#[test]
+fn test_convert_cell_expression_to_string() {
+    let a = "0x0000000000000000000000000000000000000000000000000000000000000002".to_string();
+    let b = "0x0000000000000000000000000000000000000000000000000000000000002002".to_string();
+    assert_eq!(
+        format!("(({a}) + (-({a}))) . ((col) x ({b}))"),
+        (CellExpression::Product(
+            Box::new(CellExpression::Sum(
+                Box::new(CellExpression::Constant(a.clone())),
+                Box::new(CellExpression::Negated(Box::new(CellExpression::Constant(
+                    a.clone()
+                )))),
+            )),
+            Box::new(CellExpression::Scaled(
+                Box::new(CellExpression::CellValue(Cell { 
+                    column: Column {
+                        name: "col".to_string(),
+                        ctype: crate::system::ColumnType::Advice,
+                        stype: crate::system::SpecialType::None,
+                    },
+                    name: "cell".to_string(),
+                    value: Some(b.clone()),
+                    index: 0,
+                })),
+                b.clone(),
+            )),
+        ))
+        .to_string()
     );
 }

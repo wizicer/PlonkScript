@@ -8,7 +8,7 @@ pub mod operator;
 use operator::register_operator;
 
 use self::{
-    bind::register_bind, custom_type::register_custom_type, gate::register_gate, io::register_io,
+    bind::register_bind, custom_type::register_custom_type, io::register_io,
 };
 pub use io::DEFAULT_INSTANCE_COLUMN_NAME;
 
@@ -29,7 +29,6 @@ impl EngineExt for rhai::Engine {
         register_io(self);
         register_bind(self);
         register_custom_type(self);
-        register_gate(self);
         register_operator(self);
 
         define_region("default".to_string());

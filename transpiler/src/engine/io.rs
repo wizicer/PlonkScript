@@ -10,7 +10,6 @@ pub fn register_io(engine: &mut rhai::Engine) {
         .register_fn("init_output", init_output)
         .register_fn("set_output", set_output)
         .register_fn("init_advice_column", init_advice_column)
-        .register_fn("init_selector_column", init_selector_column)
         .register_fn("init_fixed_column", init_fixed_column)
         .register_fn("set_parameter", set_parameter)
         .register_fn("set_parameter", set_parameter_i64)
@@ -78,20 +77,9 @@ fn init_advice_column(v: String) -> Column {
     }
     col
 }
-fn init_selector_column(v: String) -> Column {
-    // println!("init_selector_column({})", v);
-    let col = Column {
-        name: v.to_string(),
-        ctype: ColumnType::Selector,
-        stype: SpecialType::None,
-    };
-    unsafe {
-        CONTEXT.columns.push(col.clone());
-    }
-    col
-}
+
 fn init_fixed_column(v: String) -> Column {
-    // println!("init_selector_column({})", v);
+    // println!("init_fixed_column({})", v);
     let col = Column {
         name: v.to_string(),
         ctype: ColumnType::Fixed,
