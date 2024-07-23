@@ -12,7 +12,7 @@ pub fn register_custom_type(engine: &mut rhai::Engine) {
 
 impl Column {
     pub fn get_field(&mut self, index: i64) -> Cell {
-        let name = self.get_field_name(index);
+        let name = get_field_name(&self, index);
         unsafe {
             if CONTEXT.cells.contains_key(&name) {
                 return CONTEXT.cells[&name].clone();
@@ -27,7 +27,7 @@ impl Column {
         }
     }
     pub fn set_field(&mut self, index: i64, value: Cell) {
-        let name = self.get_field_name(index);
+        let name = get_field_name(&self, index);
         let cell = Cell {
             name: name.clone(),
             index,
@@ -39,15 +39,15 @@ impl Column {
             *entry = cell;
         }
     }
-
-    fn get_field_name(&self, index: i64) -> String {
-        let region = unsafe { CONTEXT.regions.last().unwrap().clone() };
-        format!("{}[{}]_{}_{}", self.name, index, region.name, region.id)
-    }
 }
 
 impl Cell {
     fn get_value(&mut self) -> String {
         self.value.clone().unwrap()
     }
+}
+
+pub fn get_field_name(col: &Column, index: i64) -> String {
+    let region = unsafe { CONTEXT.regions.last().unwrap().clone() };
+    format!("{}[{}]_{}_{}", col.name, index, region.name, region.id)
 }

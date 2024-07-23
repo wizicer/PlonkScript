@@ -1,10 +1,14 @@
 use rhai::EvalAltResult;
 
+use self::cell_expression::ToBaseIndex;
 use self::cell_expression::ToString;
 use crate::engine::gate::check_gate_ce;
+use crate::system::cell_expression::GetBaseIndex;
 use crate::system::cell_expression::ToValueString;
 use crate::system::*;
 use crate::CONTEXT;
+
+use super::custom_type::get_field_name;
 
 pub fn register_bind(engine: &mut rhai::Engine) {
     let _ = &mut engine
@@ -12,8 +16,7 @@ pub fn register_bind(engine: &mut rhai::Engine) {
         .register_fn("assign_constraint", assign_constraint_cell_ce)
         .register_fn("assign_constraint", assign_constraint_string)
         .register_fn("assign_common", assign_common_string)
-        .register_fn("assign_common", assign_common_ce)
-        ;
+        .register_fn("assign_common", assign_common_ce);
 }
 
 // a <== b
@@ -45,7 +48,7 @@ fn assign_constraint_cell_ce(a: &mut Cell, b: CellExpression) -> Cell {
     push_instruction_to_last_region(vec![Instruction::AssignAdvice(a.clone(), b.clone())]);
 
     // set gate
-    let selector = upsert_gate(
+    let (selector, index) = upsert_gate(
         None, // TODO: gate name should come from code
         CellExpression::Sum(
             Box::new(CellExpression::Negated(Box::new(
@@ -53,14 +56,15 @@ fn assign_constraint_cell_ce(a: &mut Cell, b: CellExpression) -> Cell {
             ))),
             Box::new(b.clone()),
         ),
-    );
+    )
+    .unwrap();
 
     // enable selector
     let enable = Cell {
-        column: selector.unwrap(),
-        name: "".to_string(),
+        column: selector.clone(),
+        name: get_field_name(&selector, index),
         value: Some("1".to_string()),
-        index: 0,
+        index: index,
     };
     if let Some(region) = unsafe { CONTEXT.regions.last_mut() } {
         region
@@ -71,18 +75,27 @@ fn assign_constraint_cell_ce(a: &mut Cell, b: CellExpression) -> Cell {
     a.clone()
 }
 
-fn upsert_gate(name: Option<String>, exp: CellExpression) -> Result<Column, Box<EvalAltResult>> {
+fn upsert_gate(
+    name: Option<String>,
+    exp: CellExpression,
+) -> Result<(Column, i64), Box<EvalAltResult>> {
     // insert gate if not exists
     // if exists, just ignore
 
     // println!("upsert_gate({:#?})", exp);
+    let base_index = exp.get_base_index();
+    let exp = if base_index > 0 {
+        exp.to_base_index(base_index)
+    } else {
+        exp
+    };
     check_gate_ce(&exp)?;
     let exp_str = exp.to_string();
     unsafe {
         let gate = CONTEXT.gates.iter().find(|(_, n, _, _)| n == &exp_str);
         match gate {
             Some((_, _, col, _)) => {
-                return Ok(col.clone());
+                return Ok((col.clone(), base_index));
             }
             None => {}
         }
@@ -110,7 +123,7 @@ fn upsert_gate(name: Option<String>, exp: CellExpression) -> Result<Column, Box<
         CONTEXT.columns.push(selector.clone());
     }
 
-    Ok(selector)
+    Ok((selector, base_index))
 }
 
 fn assign_constraint_string(a: &mut Cell, b: String) -> Cell {

@@ -1,3 +1,5 @@
+use std::cmp;
+
 use super::{Cell, CellExpression, Column};
 use halo2_proofs::pasta::{group::ff::PrimeField, Fp};
 
@@ -155,6 +157,58 @@ impl ToString for CellExpression {
     }
 }
 
+pub trait ToBaseIndex {
+    fn to_base_index(self, base_index: i64) -> Self;
+}
+
+impl ToBaseIndex for CellExpression {
+    fn to_base_index(self, base_index: i64) -> Self {
+        match self {
+            CellExpression::Constant(c) => CellExpression::Constant(c),
+            CellExpression::CellValue(c) => CellExpression::CellValue(Cell {
+                index: c.index - base_index,
+                ..c
+            }),
+            CellExpression::Negated(n) => {
+                CellExpression::Negated(Box::new((*n).to_base_index(base_index)))
+            }
+            CellExpression::Product(a, b) => CellExpression::Product(
+                Box::new(a.to_base_index(base_index)),
+                Box::new(b.to_base_index(base_index)),
+            ),
+            CellExpression::Sum(a, b) => CellExpression::Sum(
+                Box::new(a.to_base_index(base_index)),
+                Box::new(b.to_base_index(base_index)),
+            ),
+            CellExpression::Scaled(a, b) => {
+                CellExpression::Scaled(Box::new(a.to_base_index(base_index)), b)
+            }
+        }
+    }
+}
+
+pub trait GetBaseIndex {
+    fn get_base_index(&self) -> i64;
+}
+
+impl GetBaseIndex for CellExpression {
+    fn get_base_index(&self) -> i64 {
+        match self {
+            CellExpression::Constant(_) => i64::MAX,
+            CellExpression::CellValue(c) => match c.column.ctype {
+                crate::system::ColumnType::Selector => todo!(),
+                crate::system::ColumnType::Advice => c.index,
+                crate::system::ColumnType::Fixed => c.index,
+                crate::system::ColumnType::Instance => todo!(),
+            },
+            CellExpression::Negated(n) => n.get_base_index(),
+            CellExpression::Product(a, b) => cmp::min(a.get_base_index(), b.get_base_index()),
+            CellExpression::Sum(a, b) => cmp::min(a.get_base_index(), b.get_base_index()),
+            CellExpression::Scaled(a, _) => a.get_base_index(),
+        }
+    }
+}
+
 #[test]
 fn test_convert_cell_expression_to_value() {
     let a = "0x0000000000000000000000000000000000000000000000000000000000000002".to_string();
@@ -200,7 +254,7 @@ fn test_convert_cell_expression_to_string() {
                 )))),
             )),
             Box::new(CellExpression::Scaled(
-                Box::new(CellExpression::CellValue(Cell { 
+                Box::new(CellExpression::CellValue(Cell {
                     column: Column {
                         name: "col".to_string(),
                         ctype: crate::system::ColumnType::Advice,

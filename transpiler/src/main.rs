@@ -10,10 +10,12 @@ pub fn main() -> Result<(), Box<EvalAltResult>> {
     //     eprintln!("My backtrace: {:#?}", backtrace);
     // }));
 
-    let code = fs::read_to_string("fibonacci.plonk").expect("read file failed");
+    let code = fs::read_to_string("mimc5.plonk").expect("read file failed");
     let output = try_run(code);
     match output {
-        Ok(_) => (),
+        Ok(_) => {
+            println!("Done");
+        }
         Err(e) => {
             println!("Script Error: {:#?}", e);
         }

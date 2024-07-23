@@ -226,7 +226,8 @@ impl<F: PrimeField> CommonConfig<F> {
                         -1 => Rotation::prev(),
                         0 => Rotation::cur(),
                         1 => Rotation::next(),
-                        _ => todo!(),
+                        x @ 2..=5 => Rotation(x as i32),
+                        x => panic!("too big the rotation: {}", x),
                     },
                 )
             }),

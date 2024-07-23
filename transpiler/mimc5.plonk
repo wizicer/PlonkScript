@@ -121,35 +121,26 @@ fn pow_5(x) {
     x4 * x
 }
 
-gate hash_round(a, f, s) {
-    s <| pow_5(a + f) - a[1];
-}
+pub input in1;
+pub output out;
 
-public selector s_mimc_hash;
+col advice a;
 
-public input in1;
-public output out;
+col fixed f;
 
-private advice a;
-
-public fixed f;
-
-region permute_state(in1, a, f, s) {
+region permute_state(in1, a, f) {
     let rc = global::round_constants;
     let r = rc.len();
     a[0] <== in1;
 
     for i in 0..r {
         f[i] <-- rc[i];
-        a[i + 1] <== pow_5(a[i] + rc[i]);
-        s[i] <-- enable;
+        a[i + 1] <== pow_5(a[i] + f[i]);
     }
 
     a[r]
 }
 
-let output = permute_state(in1, a, f, s_mimc_hash);
+let output = permute_state(in1, a, f);
 
 out <== output;
-
-hash_round(a, f, s_mimc_hash);
