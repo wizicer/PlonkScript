@@ -5,10 +5,11 @@ pub mod custom_type;
 pub mod gate;
 pub mod io;
 pub mod operator;
-use operator::register_operator;
+pub mod resolver;
 
 use self::{
     bind::register_bind, custom_type::register_custom_type, io::register_io,
+    operator::register_operator, resolver::register_module_resolver,
 };
 pub use io::DEFAULT_INSTANCE_COLUMN_NAME;
 
@@ -30,6 +31,8 @@ impl EngineExt for rhai::Engine {
         register_bind(self);
         register_custom_type(self);
         register_operator(self);
+
+        register_module_resolver(self);
 
         define_region("default".to_string());
     }
