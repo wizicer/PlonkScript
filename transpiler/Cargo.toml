@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 halo2_proofs = { path = "../vendor/halo2/halo2_proofs" }
-rhai = { version = "1.15.0", features = ["internals"] }
+rhai = { version = "1.19.0", features = ["internals"] }
 regex = "*"
 once_cell = "*"
 halo2_summarizer = { path = "../halo2_summarizer" }
