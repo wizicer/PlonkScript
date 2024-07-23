@@ -115,12 +115,6 @@ const round_constants = [
     0x25cc5e57424f0a04f73374e760345ac956b3d1eb67b3fec1de3fc09ba0cce08b,
 ];
 
-fn pow_5(x) {
-    let x2 = x * x;
-    let x4 = x2 * x2;
-    x4 * x
-}
-
 pub input in1;
 pub output out;
 
@@ -135,7 +129,7 @@ region permute_state(in1, a, f) {
 
     for i in 0..r {
         f[i] <-- rc[i];
-        a[i + 1] <== pow_5(a[i] + f[i]);
+        a[i + 1] <== (a[i] + f[i]) ** 5;
     }
 
     a[r]

@@ -8,6 +8,12 @@ macro_rules! engine_register_ops {
     };
 }
 
+macro_rules! engine_register_ops_i64 {
+    ($eng: expr, $op: tt, $func: ident, $a:ty) => {
+        $eng.register_fn($op, $func::<$a>);
+    };
+}
+
 macro_rules! engine_register_ops_types {
     ($eng: expr, $op: tt, $func: ident) => {
         engine_register_ops!($eng, $op, $func, Cell, Cell);
@@ -42,10 +48,21 @@ macro_rules! engine_register_ops_types {
     };
 }
 
+macro_rules! engine_register_ops_types_i64 {
+    ($eng: expr, $op: tt, $func: ident) => {
+        engine_register_ops_i64!($eng, $op, $func, Cell);
+        engine_register_ops_i64!($eng, $op, $func, CellExpression);
+        engine_register_ops_i64!($eng, $op, $func, String);
+        engine_register_ops_i64!($eng, $op, $func, Column);
+        engine_register_ops_i64!($eng, $op, $func, i64);
+    };
+}
+
 pub fn register_operator(engine: &mut rhai::Engine) {
     engine_register_ops_types!(engine, +, operator_plus);
     engine_register_ops_types!(engine, -, operator_minus);
     engine_register_ops_types!(engine, *, operator_mul);
+    engine_register_ops_types_i64!(engine, "**", operator_pow);
 }
 
 fn operator_plus<T1: ToCellExpression, T2: ToCellExpression>(a: T1, b: T2) -> CellExpression {
@@ -68,4 +85,13 @@ fn operator_mul<T1: ToCellExpression, T2: ToCellExpression>(a: T1, b: T2) -> Cel
         (b, CellExpression::Constant(a)) => CellExpression::Scaled(Box::new(b), a),
         (a, b) => CellExpression::Product(Box::new(a), Box::new(b)),
     }
+}
+
+fn operator_pow<T1: ToCellExpression>(a: T1, b: i64) -> CellExpression {
+    let origin_exp = a.to_cell_expression();
+    let mut exp = origin_exp.clone();
+    for _ in 1..b {
+        exp = CellExpression::Product(Box::new(exp), Box::new(origin_exp.clone()));
+    }
+    exp
 }
