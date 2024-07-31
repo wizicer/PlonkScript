@@ -29,7 +29,7 @@ fn format_declaration(code: String) -> (String, Vec<String>) {
         r"(?x)
         (?P<modifier>(?:pub|col))
         \s*
-        (?P<type>(?:input|output|advice|fixed|instance))
+        (?P<type>(?:input|output|advice|fixed|instance|selector|lookup))
         \s*
         (?P<name>[\w\d]+?)
         \s*
@@ -51,6 +51,14 @@ fn format_declaration(code: String) -> (String, Vec<String>) {
                 "let {} = init_fixed_column(\"{}\");",
                 &x["name"], &x["name"]
             ),
+            ("col", "selector") => format!(
+                "let {} = init_selector_column(\"{}\");",
+                &x["name"], &x["name"]
+            ),
+            ("col", "lookup") => format!(
+                "let {} = init_table_column(\"{}\");",
+                &x["name"], &x["name"]
+            ),
             (modifier, t) => {
                 println!("{} {} is not supported", modifier, t);
                 todo!()
@@ -67,9 +75,9 @@ fn format_assignment(code: String) -> String {
         (?P<indent>\x20*)
         (?P<to>[\w\d\[\]+\-*\x20]+?)
         \s*
-        (?P<assignment><==|<--)
+        (?P<assignment><==|<--|===)
         \s*
-        (?P<from>[\w\d\[\]+\-*\x20_\(\)]+?)
+        (?P<from>[\w\d\[\]+\-*\x20_\(\)^&|><]+?)
         \s*
         ;",
     )
@@ -80,8 +88,13 @@ fn format_assignment(code: String) -> String {
                 "{}{} = assign_constraint({}, {});",
                 &x["indent"], &x["to"], &x["to"], &x["from"]
             ),
+            ("<--", "enable") => format!("{}enable_selector({});", &x["indent"], &x["to"]),
             ("<--", _) => format!(
                 "{}{} = assign_common({}, {});",
+                &x["indent"], &x["to"], &x["to"], &x["from"]
+            ),
+            ("===", _) => format!(
+                "{}{} = constrain_equal({}, {});",
                 &x["indent"], &x["to"], &x["to"], &x["from"]
             ),
             (ass, val) => {

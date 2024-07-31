@@ -41,7 +41,7 @@ impl EngineExt for rhai::Engine {
 fn define_region(v: String) {
     // println!("define_region({})", v);
     unsafe {
-        CONTEXT.regions.push(Region {
+        CONTEXT.regions.push(InstructionBundle {
             name: v,
             id: CONTEXT.regions.len() as i64,
             instructions: vec![],

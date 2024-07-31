@@ -1,0 +1,47 @@
+# k: 4
+# in1: 7
+# in2: 1
+
+// 7 = 111, 1 = 001, 7 ^ 1 = 110 = 6
+
+pub input in1;
+pub input in2;
+pub output out;
+
+col advice in1_dec;
+col advice in2_dec;
+col advice out_dec;
+
+col selector xor_s;
+col lookup xor_in1;
+col lookup xor_in2;
+col lookup xor_out;
+
+for i in 0..2 {
+    for j in 0..2 {
+        xor_in1.push(i);
+        xor_in2.push(j);
+        xor_out.push(i ^ j);
+    }
+}
+
+fn decompose(c, input) {
+    for i in 0..3 {
+        c[i + 1] <-- (raw(input) >> i) & 1;
+    }
+    // c[0] <== input;
+    c[0] <== c[1] + c[2] * 2 + c[3] * 4;
+}
+
+decompose(in1_dec, in1);
+decompose(in2_dec, in2);
+
+out <-- raw(in1) ^ raw(in2);
+decompose(out_dec, out);
+
+for i in 1..=3 {
+    xor_s[i] <-- enable;
+}
+
+// lookup each row from 1..=3
+lookup([in1_dec * xor_s, in2_dec * xor_s, out_dec * xor_s], [xor_in1, xor_in2, xor_out]);

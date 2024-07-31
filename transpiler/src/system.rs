@@ -11,6 +11,8 @@ pub enum ColumnType {
     Advice,
     Fixed,
     Instance,
+    ComplexSelector,
+    TableLookup,
 }
 
 #[derive(Debug, Clone)]
@@ -53,6 +55,7 @@ pub struct Cell {
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub enum CellExpression {
+    Calculated(String),
     Constant(String),
     CellValue(Cell),
     Negated(Box<CellExpression>),
@@ -66,16 +69,25 @@ pub enum CellExpression {
 pub struct SimplifiedConstraitSystem {
     pub signals: Vec<Cell>,
     pub columns: Vec<Column>,
-    pub regions: Vec<Region>,
+    pub regions: Vec<InstructionBundle>,
+    pub tables: Vec<InstructionBundle>,
     pub instance_count: i64,
     pub gates: Vec<(String, String, Column, CellExpression)>,// name, expression string(key), column, expression
     pub inputs: Lazy<HashMap<String, String>>,
     pub cells: Lazy<HashMap<String, Cell>>,
+    pub lookups: Vec<LookupParameter>,
 }
 
 #[derive(Debug, Clone, Default)]
 #[allow(dead_code)]
-pub struct Region {
+pub struct LookupParameter {
+    pub name: String,
+    pub map: Vec<(CellExpression, Column)>,// expression, lookup column
+}
+
+#[derive(Debug, Clone, Default)]
+#[allow(dead_code)]
+pub struct InstructionBundle {
     pub name: String,
     pub id: i64,
     pub instructions: Vec<Instruction>,
@@ -92,4 +104,5 @@ pub enum Instruction {
     AssignAdviceFromInstance(Cell, Cell), // advice, adv_row(offset), instance, ins_row
     ConstrainEqual(Cell, Cell),        // advice, adv_row(offset), advice, adv_row(offset)
     ConstrainConstant(),               //
+    AssignCell(Column, String), // table, column (instead of cell because always add to latest), constant value
 }

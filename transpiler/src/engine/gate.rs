@@ -6,11 +6,15 @@ use crate::system::*;
 
 pub fn check_gate_ce(exp: &CellExpression) -> Result<(), Box<EvalAltResult>> {
     match exp {
+        CellExpression::Calculated(_) => create_error(
+            io::ErrorKind::Unsupported,
+            "Calculated cell (no operators than +/*/- is allowed in gate) cannot be converted to gate.",
+        ),
         CellExpression::Constant(_) => Ok(()),
         CellExpression::CellValue(c) => match c.column.ctype {
             crate::system::ColumnType::Selector => create_error(
                 io::ErrorKind::Unsupported,
-                "Instance cannot be used in gate",
+                "Selector cannot be used in gate",
             ),
             crate::system::ColumnType::Advice => Ok(()),
             crate::system::ColumnType::Fixed => match c.index {
@@ -24,6 +28,16 @@ pub fn check_gate_ce(exp: &CellExpression) -> Result<(), Box<EvalAltResult>> {
             crate::system::ColumnType::Instance => create_error(
                 io::ErrorKind::Unsupported,
                 "Instance cannot be used in gate",
+            ),
+
+            crate::system::ColumnType::ComplexSelector => create_error(
+                io::ErrorKind::Unsupported,
+                "Complex selector cannot be used in gate",
+            ),
+
+            crate::system::ColumnType::TableLookup => create_error(
+                io::ErrorKind::Unsupported,
+                "Lookup cannot be used in gate",
             ),
         },
         CellExpression::Negated(n) => check_gate_ce(&*n),

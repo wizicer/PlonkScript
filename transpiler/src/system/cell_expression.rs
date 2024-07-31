@@ -104,12 +104,15 @@ impl ToField for CellExpression {
 impl ToValueString for CellExpression {
     fn to_value_string(&self) -> Option<String> {
         match self {
+            CellExpression::Calculated(c) => Some(c.clone()),
             CellExpression::Constant(c) => Some(c.clone()),
             CellExpression::CellValue(c) => match c.column.ctype {
                 crate::system::ColumnType::Selector => todo!(),
                 crate::system::ColumnType::Advice => c.value.clone(),
                 crate::system::ColumnType::Fixed => c.value.clone(),
                 crate::system::ColumnType::Instance => todo!(),
+                crate::system::ColumnType::ComplexSelector => todo!(),
+                crate::system::ColumnType::TableLookup => todo!(),
             },
             CellExpression::Negated(n) => {
                 // get_known_value::<Fp>(convert_to_value(*n)?).map(|x| fp_to_string(&(-x)))
@@ -131,15 +134,42 @@ impl ToValueString for CellExpression {
     }
 }
 
+impl ToValueString for Cell {
+    fn to_value_string(&self) -> Option<String> {
+        self.value.clone()
+    }
+}
+
+impl ToValueString for Column {
+    fn to_value_string(&self) -> Option<String> {
+        panic!("Column cannot be converted to value string")
+    }
+}
+
+impl ToValueString for String {
+    fn to_value_string(&self) -> Option<String> {
+        Some(self.clone())
+    }
+}
+
+impl ToValueString for i64 {
+    fn to_value_string(&self) -> Option<String> {
+        Some(self.to_string())
+    }
+}
+
 impl ToString for CellExpression {
     fn to_string(&self) -> String {
         match self {
+            CellExpression::Calculated(c) => c.clone(),
             CellExpression::Constant(c) => c.clone(),
             CellExpression::CellValue(c) => match c.column.ctype {
                 crate::system::ColumnType::Selector => todo!(),
                 crate::system::ColumnType::Advice => c.column.name.clone(),
                 crate::system::ColumnType::Fixed => c.column.name.clone(),
                 crate::system::ColumnType::Instance => todo!(),
+                crate::system::ColumnType::ComplexSelector => todo!(),
+                crate::system::ColumnType::TableLookup => todo!(),
             },
             CellExpression::Negated(n) => {
                 format!("-({})", n.to_string())
@@ -164,6 +194,7 @@ pub trait ToBaseIndex {
 impl ToBaseIndex for CellExpression {
     fn to_base_index(self, base_index: i64) -> Self {
         match self {
+            CellExpression::Calculated(c) => CellExpression::Calculated(c),
             CellExpression::Constant(c) => CellExpression::Constant(c),
             CellExpression::CellValue(c) => CellExpression::CellValue(Cell {
                 index: c.index - base_index,
@@ -194,12 +225,15 @@ pub trait GetBaseIndex {
 impl GetBaseIndex for CellExpression {
     fn get_base_index(&self) -> i64 {
         match self {
+            CellExpression::Calculated(_) => i64::MAX,
             CellExpression::Constant(_) => i64::MAX,
             CellExpression::CellValue(c) => match c.column.ctype {
                 crate::system::ColumnType::Selector => todo!(),
                 crate::system::ColumnType::Advice => c.index,
                 crate::system::ColumnType::Fixed => c.index,
                 crate::system::ColumnType::Instance => todo!(),
+                crate::system::ColumnType::ComplexSelector => todo!(),
+                crate::system::ColumnType::TableLookup => todo!(),
             },
             CellExpression::Negated(n) => n.get_base_index(),
             CellExpression::Product(a, b) => cmp::min(a.get_base_index(), b.get_base_index()),

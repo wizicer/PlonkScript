@@ -12,3 +12,5 @@ regex = "*"
 once_cell = "*"
 halo2_summarizer = { path = "../halo2_summarizer" }
 hex = "0.4.3"
+num-bigint = "0.4"
+num-traits = "0.2"

@@ -1,5 +1,5 @@
-use std::io;
 use std::marker::PhantomData;
+use std::{collections::HashMap, io};
 
 use halo2_proofs::{
     circuit::{floor_planner::V1, *},
@@ -8,6 +8,7 @@ use halo2_proofs::{
     poly::Rotation,
 };
 
+use crate::system::LookupParameter;
 use crate::system::{cell_expression::ToField, CellExpression};
 use crate::{engine::DEFAULT_INSTANCE_COLUMN_NAME, CONTEXT};
 
@@ -24,6 +25,7 @@ pub struct CommonConfig<F: PrimeField> {
     fixeds: Vec<(String, Column<Fixed>)>,
     selectors: Vec<(String, Selector)>,
     instances: Vec<(String, Column<Instance>)>,
+    lookups: Vec<(String, TableColumn)>,
     acells: Vec<(String, AssignedCell<F, F>)>,
     _marker: PhantomData<F>,
 }
@@ -45,6 +47,7 @@ impl<F: PrimeField> Circuit<F> for MyCircuit<F> {
         let mut fixeds = Vec::new();
         let mut selectors = Vec::new();
         let mut instances = Vec::new();
+        let mut lookups = Vec::new();
         let acells = Vec::new();
 
         if unsafe { CONTEXT.signals.len() > 0 } {
@@ -64,6 +67,12 @@ impl<F: PrimeField> Circuit<F> for MyCircuit<F> {
                 crate::system::ColumnType::Instance => {
                     instances.push((col.name, meta.instance_column()))
                 }
+                crate::system::ColumnType::ComplexSelector => {
+                    selectors.push((col.name, meta.complex_selector()))
+                }
+                crate::system::ColumnType::TableLookup => {
+                    lookups.push((col.name, meta.lookup_table_column()))
+                }
             }
         }
 
@@ -80,6 +89,7 @@ impl<F: PrimeField> Circuit<F> for MyCircuit<F> {
             fixeds,
             selectors,
             instances,
+            lookups,
             acells,
             _marker: PhantomData,
         };
@@ -91,6 +101,26 @@ impl<F: PrimeField> Circuit<F> for MyCircuit<F> {
             meta.create_gate(sgname, |meta| {
                 vec![convert_to_gate_expression(meta, config.clone(), gate)
                     .expect(format!("cannot convert gate expression of {}", sgname).as_str())]
+            });
+        }
+
+        // build lookups
+        let slookups = unsafe { CONTEXT.lookups.clone() };
+        for LookupParameter { name, map } in slookups {
+            let slname = Box::leak(name.into_boxed_str());
+            meta.lookup(|meta| {
+                let lookup_vec = map
+                    .into_iter()
+                    .map(|(exp, col)| {
+                        (
+                            convert_to_gate_expression(meta, config.clone(), exp).expect(
+                                format!("cannot convert lookup expression of {}", slname).as_str(),
+                            ),
+                            config.get_table_lookup(&col.name).unwrap(),
+                        )
+                    })
+                    .collect::<Vec<(Expression<F>, TableColumn)>>();
+                lookup_vec
             });
         }
 
@@ -112,13 +142,13 @@ impl<F: PrimeField> Circuit<F> for MyCircuit<F> {
                         match ins {
                             crate::system::Instruction::EnableSelector(c) => {
                                 config
-                                    .get_selector(c.column.name)?
+                                    .get_selector(&c.column.name)?
                                     .enable(&mut region, c.index as usize)?;
                             }
                             crate::system::Instruction::AssignFixed(f, exp) => {
                                 let acell = region.assign_fixed(
                                     || "fixed",
-                                    config.get_fixed(f.column.name)?,
+                                    config.get_fixed(&f.column.name)?,
                                     f.index as usize,
                                     || config.convert_to_value(exp.clone()),
                                 )?;
@@ -127,7 +157,7 @@ impl<F: PrimeField> Circuit<F> for MyCircuit<F> {
                             crate::system::Instruction::AssignAdvice(a, exp) => {
                                 let acell = region.assign_advice(
                                     || "advice",
-                                    config.get_advice(a.column.name)?,
+                                    config.get_advice(&a.column.name)?,
                                     a.index as usize,
                                     || config.convert_to_value(exp.clone()),
                                 )?;
@@ -137,9 +167,9 @@ impl<F: PrimeField> Circuit<F> for MyCircuit<F> {
                             crate::system::Instruction::AssignAdviceFromInstance(a, b) => {
                                 let acell = region.assign_advice_from_instance(
                                     || "instance",
-                                    config.get_instance(b.column.name)?,
+                                    config.get_instance(&b.column.name)?,
                                     b.index as usize,
-                                    config.get_advice(a.column.name)?,
+                                    config.get_advice(&a.column.name)?,
                                     a.index as usize,
                                 )?;
                                 config.acells.push((a.name, acell));
@@ -150,6 +180,47 @@ impl<F: PrimeField> Circuit<F> for MyCircuit<F> {
                                 region.constrain_equal(acell.cell(), bcell.cell())?;
                             }
                             crate::system::Instruction::ConstrainConstant() => todo!(),
+                            crate::system::Instruction::AssignCell(_, _) => {
+                                todo!("illegal instruction")
+                            }
+                        };
+                    }
+
+                    Ok(())
+                },
+            )?;
+        }
+
+        let stables = unsafe { CONTEXT.tables.clone() };
+        let mut max_indexes = HashMap::<&str, usize>::new();
+        for t in stables {
+            layouter.assign_table(
+                || t.name.clone(),
+                |mut table| {
+                    for ins in t.instructions.clone() {
+                        match ins {
+                            crate::system::Instruction::AssignCell(a, b) => {
+                                let idx = max_indexes.get_mut(a.name.as_str());
+                                let idx = match idx {
+                                    Some(i) => {
+                                        *i += 1;
+                                        *i
+                                    }
+                                    None => {
+                                        let name = Box::leak(a.name.clone().into_boxed_str());
+                                        max_indexes.insert(name, 0);
+                                        0
+                                    }
+                                };
+
+                                table.assign_cell(
+                                    || a.name.clone(),
+                                    config.get_table_lookup(&a.name)?,
+                                    idx,
+                                    || config.convert_to_value(CellExpression::Constant(b.clone())),
+                                )?;
+                            }
+                            _ => todo!("illegal instruction"),
                         };
                     }
 
@@ -163,29 +234,33 @@ impl<F: PrimeField> Circuit<F> for MyCircuit<F> {
 }
 
 impl<F: PrimeField> CommonConfig<F> {
-    fn get_selector(&self, name: String) -> Result<Selector, io::Error> {
+    fn get_selector(&self, name: &String) -> Result<Selector, io::Error> {
         Self::get_column(&self.selectors, name)
     }
 
-    fn get_advice(&self, name: String) -> Result<Column<Advice>, io::Error> {
+    fn get_advice(&self, name: &String) -> Result<Column<Advice>, io::Error> {
         Self::get_column(&self.advices, name)
     }
 
-    fn get_fixed(&self, name: String) -> Result<Column<Fixed>, io::Error> {
+    fn get_fixed(&self, name: &String) -> Result<Column<Fixed>, io::Error> {
         Self::get_column(&self.fixeds, name)
     }
 
-    fn get_instance(&self, name: String) -> Result<Column<Instance>, io::Error> {
+    fn get_instance(&self, name: &String) -> Result<Column<Instance>, io::Error> {
         Self::get_column(&self.instances, name)
     }
 
-    fn get_column<T>(columns: &Vec<(String, T)>, name: String) -> Result<T, io::Error>
+    fn get_table_lookup(&self, name: &String) -> Result<TableColumn, io::Error> {
+        Self::get_column(&self.lookups, name)
+    }
+
+    fn get_column<T>(columns: &Vec<(String, T)>, name: &String) -> Result<T, io::Error>
     where
         T: Clone,
     {
         columns
             .iter()
-            .filter(|x| x.0 == name)
+            .filter(|x| x.0 == *name)
             .nth(0)
             .map(|x| x.1.clone())
             .ok_or(io::Error::new(
@@ -217,9 +292,9 @@ impl<F: PrimeField> CommonConfig<F> {
         let column = cell.column;
         match column.ctype {
             crate::system::ColumnType::Selector => self
-                .get_selector(column.name)
+                .get_selector(&column.name)
                 .map(|x| meta.query_selector(x)),
-            crate::system::ColumnType::Advice => self.get_advice(column.name).map(|x| {
+            crate::system::ColumnType::Advice => self.get_advice(&column.name).map(|x| {
                 meta.query_advice(
                     x,
                     match cell.index {
@@ -232,14 +307,19 @@ impl<F: PrimeField> CommonConfig<F> {
                 )
             }),
             crate::system::ColumnType::Fixed => {
-                self.get_fixed(column.name).map(|x| meta.query_fixed(x))
+                self.get_fixed(&column.name).map(|x| meta.query_fixed(x))
             }
             crate::system::ColumnType::Instance => todo!(),
+            crate::system::ColumnType::ComplexSelector => self
+                .get_selector(&column.name)
+                .map(|x| meta.query_selector(x)),
+            crate::system::ColumnType::TableLookup => todo!(),
         }
     }
 
     fn convert_to_value(&self, exp: CellExpression) -> Value<F> {
         match exp {
+            CellExpression::Calculated(c) => Value::known(c.to_field().unwrap()),
             CellExpression::Constant(c) => Value::known(c.to_field().unwrap()),
             CellExpression::CellValue(c) => match c.column.ctype {
                 crate::system::ColumnType::Selector => {
@@ -250,6 +330,10 @@ impl<F: PrimeField> CommonConfig<F> {
                 }
                 crate::system::ColumnType::Fixed => self.get_assigned_cell(c.name).value().copied(),
                 crate::system::ColumnType::Instance => todo!(),
+                crate::system::ColumnType::ComplexSelector => {
+                    self.get_assigned_cell(c.name).value().copied()
+                }
+                crate::system::ColumnType::TableLookup => todo!(),
             },
             CellExpression::Negated(n) => -self.convert_to_value(*n),
             CellExpression::Product(a, b) => self.convert_to_value(*a) * self.convert_to_value(*b),
@@ -267,6 +351,10 @@ fn convert_to_gate_expression<F: PrimeField>(
     exp: CellExpression,
 ) -> Result<Expression<F>, io::Error> {
     match exp {
+        CellExpression::Calculated(c) => Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!("calculated value {} is allowed in gate", c),
+        )),
         CellExpression::Constant(c) => c
             .to_field()
             .ok_or(io::Error::new(
@@ -279,6 +367,8 @@ fn convert_to_gate_expression<F: PrimeField>(
             crate::system::ColumnType::Advice => config.query_column(meta, c),
             crate::system::ColumnType::Fixed => config.query_column(meta, c),
             crate::system::ColumnType::Instance => todo!(),
+            crate::system::ColumnType::ComplexSelector => config.query_column(meta, c),
+            crate::system::ColumnType::TableLookup => todo!(),
         },
         CellExpression::Negated(n) => {
             convert_to_gate_expression(meta, config.clone(), *n).map(|x| -x)

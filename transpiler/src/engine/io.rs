@@ -1,6 +1,6 @@
+use crate::system::cell_expression::ToValueString;
 use crate::system::*;
 use crate::CONTEXT;
-use crate::system::cell_expression::ToValueString;
 
 pub const DEFAULT_INSTANCE_COLUMN_NAME: &str = "defins";
 
@@ -10,7 +10,11 @@ pub fn register_io(engine: &mut rhai::Engine) {
         .register_fn("init_output", init_output)
         .register_fn("set_output", set_output)
         .register_fn("init_advice_column", init_advice_column)
+        .register_fn("init_selector_column", init_selector_column)
         .register_fn("init_fixed_column", init_fixed_column)
+        .register_fn("init_table_column", init_table_column)
+        .register_fn("raw", raw_ce)
+        .register_fn("raw", raw_c)
         .register_fn("set_parameter", set_parameter)
         .register_fn("set_parameter", set_parameter_i64)
         .register_fn("inspect", inspect)
@@ -78,11 +82,37 @@ fn init_advice_column(v: String) -> Column {
     col
 }
 
+fn init_selector_column(v: String) -> Column {
+    // println!("init_selector_column({})", v);
+    let col = Column {
+        name: v.to_string(),
+        ctype: ColumnType::ComplexSelector,
+        stype: SpecialType::None,
+    };
+    unsafe {
+        CONTEXT.columns.push(col.clone());
+    }
+    col
+}
+
 fn init_fixed_column(v: String) -> Column {
     // println!("init_fixed_column({})", v);
     let col = Column {
         name: v.to_string(),
         ctype: ColumnType::Fixed,
+        stype: SpecialType::None,
+    };
+    unsafe {
+        CONTEXT.columns.push(col.clone());
+    }
+    col
+}
+
+fn init_table_column(v: String) -> Column {
+    // println!("init_table_column({})", v);
+    let col = Column {
+        name: v.to_string(),
+        ctype: ColumnType::TableLookup,
         stype: SpecialType::None,
     };
     unsafe {
@@ -111,4 +141,12 @@ fn inspect_ce(obj: CellExpression) {
 
 fn inspect_str(obj: String) {
     println!("{:#?}", obj);
+}
+
+fn raw_ce(c: CellExpression) -> String {
+    c.to_value_string().unwrap()
+}
+
+fn raw_c(c: Cell) -> String {
+    c.to_value_string().unwrap()
 }

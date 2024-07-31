@@ -18,9 +18,11 @@ static mut CONTEXT: SimplifiedConstraitSystem = SimplifiedConstraitSystem {
     signals: Vec::new(),
     columns: Vec::new(),
     regions: Vec::new(),
+    tables: Vec::new(),
     gates: Vec::new(),
     inputs: Lazy::new(|| HashMap::new()),
     cells: Lazy::new(|| HashMap::new()),
+    lookups: Vec::new(),
     instance_count: 0,
 };
 
@@ -31,9 +33,11 @@ pub fn try_run(code: String) -> Result<String, Box<EvalAltResult>> {
             signals: Vec::new(),
             columns: Vec::new(),
             regions: Vec::new(),
+            tables: Vec::new(),
             gates: Vec::new(),
             inputs: Lazy::new(|| HashMap::new()),
             cells: Lazy::new(|| HashMap::new()),
+            lookups: Vec::new(),
             instance_count: 0,
         };
     }

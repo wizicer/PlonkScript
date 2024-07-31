@@ -1,3 +1,6 @@
+use core::panic;
+
+use rhai::Array;
 use rhai::EvalAltResult;
 
 use self::cell_expression::ToBaseIndex;
@@ -15,8 +18,17 @@ pub fn register_bind(engine: &mut rhai::Engine) {
         .register_fn("assign_constraint", assign_constraint)
         .register_fn("assign_constraint", assign_constraint_cell_ce)
         .register_fn("assign_constraint", assign_constraint_string)
+        .register_fn("constrain_equal", constrain_equal)
         .register_fn("assign_common", assign_common_string)
-        .register_fn("assign_common", assign_common_ce);
+        .register_fn("assign_common", assign_common_ce)
+        .register_fn("assign_common", assign_common_i64)
+        .register_fn("push", push_column_i64)
+        .register_fn("push", push_column_ce)
+        .register_fn("enable_selector", enable_selector)
+        .register_fn("lookup", lookup)
+        .register_fn("lookup", lookup_without_name)
+        //-
+        ;
 }
 
 // a <== b
@@ -126,6 +138,12 @@ fn upsert_gate(
     Ok((selector, base_index))
 }
 
+// a === b
+fn constrain_equal(a: &mut Cell, b: Cell) {
+    // println!("constrain_equal({:#?}, {:#?})", a, b);
+    push_instruction_to_last_region(vec![Instruction::ConstrainEqual(a.clone(), b.clone())]);
+}
+
 fn assign_constraint_string(a: &mut Cell, b: String) -> Cell {
     // println!("assign_constraint({:?}, {:?})", a, b);
     let cb = CellExpression::Constant(b);
@@ -134,21 +152,27 @@ fn assign_constraint_string(a: &mut Cell, b: String) -> Cell {
     a.clone()
 }
 
-fn assign_common_string(a: &mut Cell, b: String) -> Cell {
+fn assign_common_string(a: &mut Cell, b: String) -> Result<Cell, Box<EvalAltResult>> {
     match a.column.ctype {
         ColumnType::Fixed => {
             let cb = CellExpression::Constant(b);
             a.value = cb.to_value_string();
             push_instruction_to_last_region(vec![Instruction::AssignFixed(a.clone(), cb)]);
-            a.clone()
+            Ok(a.clone())
         }
         ColumnType::Instance => {
             let cb = CellExpression::Constant(b);
             a.value = cb.to_value_string();
-            a.clone()
+            Ok(a.clone())
             //warning
         }
-        o => todo!("{:?}", o),
+        ColumnType::Advice => {
+            let cb = CellExpression::Constant(b);
+            a.value = cb.to_value_string();
+            push_instruction_to_last_region(vec![Instruction::AssignAdvice(a.clone(), cb)]);
+            Ok(a.clone())
+        }
+        o => Err(format!("unsupported column type {:?}", o).into()),
     }
 }
 
@@ -168,10 +192,95 @@ fn assign_common_ce(a: &mut Cell, b: CellExpression) -> Result<Cell, Box<EvalAlt
     }
 }
 
+fn assign_common_i64(a: &mut Cell, b: i64) -> Result<Cell, Box<EvalAltResult>> {
+    assign_common_string(a, b.to_string())
+}
+
+fn push_column_i64(a: &mut Column, b: i64) -> Result<(), Box<EvalAltResult>> {
+    push_column(a, b.to_string())
+}
+
+fn push_column_ce(a: &mut Column, b: CellExpression) -> Result<(), Box<EvalAltResult>> {
+    push_column(a, b.to_value_string().unwrap())
+}
+
+fn push_column(a: &mut Column, b: String) -> Result<(), Box<EvalAltResult>> {
+    match a.ctype {
+        ColumnType::TableLookup => {
+            let ins = vec![Instruction::AssignCell(a.clone(), b)];
+
+            let table = unsafe {
+                let table = CONTEXT.tables.iter_mut().find(|n| n.name == a.name);
+                match table {
+                    Some(t) => t,
+                    None => {
+                        let ib = InstructionBundle {
+                            id: CONTEXT.tables.len() as i64,
+                            name: a.name.clone(),
+                            instructions: vec![],
+                        };
+                        CONTEXT.tables.push(ib);
+                        let table = CONTEXT.tables.iter_mut().find(|n| n.name == a.name);
+                        match table {
+                            Some(t) => t,
+                            None => panic!("abnormal! table not found after inserted"),
+                        }
+                    }
+                }
+            };
+            for i in ins {
+                table.instructions.push(i);
+            }
+
+            Ok(())
+        }
+        o => todo!("{:?}", o),
+    }
+}
+
 fn push_instruction_to_last_region(a: Vec<Instruction>) {
     if let Some(region) = unsafe { CONTEXT.regions.last_mut() } {
         for i in a {
             region.instructions.push(i);
         }
     }
+}
+
+fn enable_selector(a: &mut Cell) {
+    // println!("enable_selector({:?})", a);
+    a.value = Some("1".to_string());
+    if let Some(region) = unsafe { CONTEXT.regions.last_mut() } {
+        region
+            .instructions
+            .push(Instruction::EnableSelector(a.clone()));
+    }
+}
+
+// fn lookup(ces: Vec<CellExpression>, cols: Vec<Column>) -> Result<(), Box<EvalAltResult>> {
+fn lookup_without_name(ces: Array, cols: Array) -> Result<(), Box<EvalAltResult>> {
+    lookup("default".to_string(), ces, cols)
+}
+
+fn lookup(name: String, ces: Array, cols: Array) -> Result<(), Box<EvalAltResult>> {
+    let ces = ces
+        .into_iter()
+        .map(|x| x.try_cast::<CellExpression>().unwrap())
+        .collect::<Vec<CellExpression>>();
+    let cols = cols
+        .into_iter()
+        .map(|x| x.try_cast::<Column>().unwrap())
+        .collect::<Vec<Column>>();
+    if ces.len() != cols.len() {
+        return Err("ces and cols length not match".into());
+    }
+
+    let mut map = Vec::<(CellExpression, Column)>::new();
+    for (ce, col) in ces.into_iter().zip(cols.into_iter()) {
+        map.push((ce, col));
+    }
+
+    unsafe {
+        CONTEXT.lookups.push(LookupParameter { name, map });
+    }
+    Ok(())
 }

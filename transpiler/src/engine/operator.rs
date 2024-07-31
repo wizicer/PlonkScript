@@ -1,3 +1,7 @@
+use num_bigint::BigInt;
+use num_traits::cast::ToPrimitive;
+use std::str::FromStr;
+
 use crate::system::*;
 
 // operators
@@ -63,6 +67,26 @@ pub fn register_operator(engine: &mut rhai::Engine) {
     engine_register_ops_types!(engine, -, operator_minus);
     engine_register_ops_types!(engine, *, operator_mul);
     engine_register_ops_types_i64!(engine, "**", operator_pow);
+
+    // to calculated value
+    engine.register_fn(">>", |t1: String, t2: i64| {
+        perform_operation(&t1, &t2.to_string(), OperationEnum::RightShift)
+    });
+    engine.register_fn(">>", |t1: String, t2: String| {
+        perform_operation(&t1, &t2, OperationEnum::RightShift)
+    });
+    engine.register_fn("&", |t1: String, t2: i64| {
+        perform_operation(&t1, &t2.to_string(), OperationEnum::BinaryAnd)
+    });
+    engine.register_fn("&", |t1: String, t2: String| {
+        perform_operation(&t1, &t2, OperationEnum::BinaryAnd)
+    });
+    engine.register_fn("^", |t1: String, t2: i64| {
+        perform_operation(&t1, &t2.to_string(), OperationEnum::ExclusiveOr)
+    });
+    engine.register_fn("^", |t1: String, t2: String| {
+        perform_operation(&t1, &t2, OperationEnum::ExclusiveOr)
+    });
 }
 
 fn operator_plus<T1: ToCellExpression, T2: ToCellExpression>(a: T1, b: T2) -> CellExpression {
@@ -94,4 +118,32 @@ fn operator_pow<T1: ToCellExpression>(a: T1, b: i64) -> CellExpression {
         exp = CellExpression::Product(Box::new(exp), Box::new(origin_exp.clone()));
     }
     exp
+}
+
+#[derive(Debug, Clone)]
+pub enum OperationEnum {
+    RightShift,
+    LeftShift,
+    BinaryAnd,
+    BinaryOr,
+    ExclusiveOr,
+}
+
+fn perform_operation(big_num_str1: &str, big_num_str2: &str, operation: OperationEnum) -> String {
+    let big_num1 = BigInt::from_str(big_num_str1).unwrap();
+    let big_num2 = BigInt::from_str(big_num_str2).unwrap();
+
+    match operation {
+        OperationEnum::RightShift => {
+            let shift = big_num2.to_usize().unwrap();
+            (big_num1 >> shift).to_string()
+        }
+        OperationEnum::LeftShift => {
+            let shift = big_num2.to_usize().unwrap();
+            (big_num1 << shift).to_string()
+        }
+        OperationEnum::BinaryAnd => (big_num1 & big_num2).to_string(),
+        OperationEnum::BinaryOr => (big_num1 | big_num2).to_string(),
+        OperationEnum::ExclusiveOr => (big_num1 ^ big_num2).to_string(),
+    }
 }
