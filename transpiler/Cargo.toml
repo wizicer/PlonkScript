@@ -14,3 +14,10 @@ halo2_summarizer = { path = "../halo2_summarizer" }
 hex = "0.4.3"
 num-bigint = "0.4"
 num-traits = "0.2"
+quote = "1.0"
+prettyplease = "0.2"
+syn = { version = "2", default-features = false, features = [
+    "full",
+    "parsing",
+] }
+proc-macro2 = { version = "1.0.74", default-features = false }

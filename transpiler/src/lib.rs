@@ -10,6 +10,7 @@ use once_cell::sync::Lazy;
 
 pub mod circuit;
 pub mod engine;
+pub mod generator;
 pub mod system;
 pub mod transpiler;
 
@@ -58,9 +59,15 @@ pub fn try_run(code: String) -> Result<String, Box<EvalAltResult>> {
         return Err(error);
     }
 
-    let d = unsafe { format!("{:#?}", CONTEXT) };
     if cfg!(debug_assertions) {
+        let d = unsafe { format!("{:#?}", CONTEXT) };
         let mut file = std::fs::File::create("context.rust").unwrap();
+        std::io::Write::write_all(&mut file, d.as_bytes()).unwrap();
+    }
+
+    if cfg!(debug_assertions) {
+        let d = unsafe { generator::generate_rust_code(&CONTEXT) };
+        let mut file = std::fs::File::create("../export_halo2_project/src/lib.rs").unwrap();
         std::io::Write::write_all(&mut file, d.as_bytes()).unwrap();
     }
 

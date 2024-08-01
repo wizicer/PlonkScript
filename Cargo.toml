@@ -3,5 +3,6 @@ members = [
     "transpiler",
     "wasm_binding",
     "halo2_summarizer",
+    "export_halo2_project",
 ]
 resolver = "2"

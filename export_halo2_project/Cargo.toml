@@ -1,0 +1,8 @@
+[package]
+name = "export_halo2_project"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+halo2_proofs = { path = "../vendor/halo2/halo2_proofs" }
+once_cell = "*"
