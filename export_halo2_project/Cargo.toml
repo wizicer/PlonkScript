@@ -5,4 +5,3 @@ edition = "2021"
 
 [dependencies]
 halo2_proofs = { path = "../vendor/halo2/halo2_proofs" }
-once_cell = "*"

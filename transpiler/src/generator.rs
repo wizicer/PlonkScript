@@ -32,6 +32,7 @@ fn get_header() -> TokenStream {
         #![allow(unused_imports)]
         #![allow(dead_code)]
         #![allow(unused_mut)]
+        #![allow(unused_doc_comments)]
         use std::marker::PhantomData;
         use std::{collections::HashMap, io};
 
@@ -86,9 +87,9 @@ fn get_circuit_impl(circuit_name: &str, cs: &SimplifiedConstraitSystem) -> Token
     }
 }
 
-fn get_circuit_configure(cs: &SimplifiedConstraitSystem) -> TokenStream {
-    let default_instance_column_name = DEFAULT_INSTANCE_COLUMN_NAME.to_string();
-    let instance_push = if cs.signals.len() > 0 {
+fn get_circuit_instances_push(cs: &SimplifiedConstraitSystem) -> TokenStream {
+    let default_instance_column_name = DEFAULT_INSTANCE_COLUMN_NAME;
+    if cs.signals.len() > 0 {
         quote! {
             instances.push((
                 #default_instance_column_name.to_string(),
@@ -97,54 +98,79 @@ fn get_circuit_configure(cs: &SimplifiedConstraitSystem) -> TokenStream {
         }
     } else {
         quote! {}
-    };
+    }
+}
 
-    let type_pushes = cs.columns.iter().map(|col| {
-        let name = col.name.as_str();
-        match col.ctype {
-            crate::system::ColumnType::Advice => {
-                quote! { advices.push((#name.to_string(), meta.advice_column()))}
+fn get_circuit_type_pushes(cs: &SimplifiedConstraitSystem) -> Vec<TokenStream> {
+    cs.columns
+        .iter()
+        .map(|col| {
+            let name = col.name.as_str();
+            match col.ctype {
+                crate::system::ColumnType::Advice => {
+                    quote! { advices.push((#name.to_string(), meta.advice_column()))}
+                }
+                crate::system::ColumnType::Selector => {
+                    quote! { selectors.push((#name.to_string(), meta.selector()))}
+                }
+                crate::system::ColumnType::Fixed => {
+                    quote! { fixeds.push((#name.to_string(), meta.fixed_column()))}
+                }
+                crate::system::ColumnType::Instance => {
+                    quote! { instances.push((#name.to_string(), meta.instance_column()))}
+                }
+                crate::system::ColumnType::ComplexSelector => {
+                    quote! { selectors.push((#name.to_string(), meta.complex_selector()))}
+                }
+                crate::system::ColumnType::TableLookup => {
+                    quote! { lookups.push((#name.to_string(), meta.lookup_table_column()))}
+                }
             }
-            crate::system::ColumnType::Selector => {
-                quote! { selectors.push((#name.to_string(), meta.selector()))}
-            }
-            crate::system::ColumnType::Fixed => {
-                quote! { fixeds.push((#name.to_string(), meta.fixed_column()))}
-            }
-            crate::system::ColumnType::Instance => {
-                quote! { instances.push((#name.to_string(), meta.instance_column()))}
-            }
-            crate::system::ColumnType::ComplexSelector => {
-                quote! { selectors.push((#name.to_string(), meta.complex_selector()))}
-            }
-            crate::system::ColumnType::TableLookup => {
-                quote! { lookups.push((#name.to_string(), meta.lookup_table_column()))}
-            }
-        }
-    });
+        })
+        .collect()
+}
 
-    let gate_creates = cs.gates.iter().map(|(gname, _, _, gate)| {
-        let sgname = gname.as_str();
+fn get_circuit_gate_creates(cs: &SimplifiedConstraitSystem) -> Vec<TokenStream> {
+    cs.gates
+        .iter()
+        .map(|(gname, _, _, gate)| {
+            let sgname = gname.as_str();
 
-        let ge = convert_to_gate_expression(gate)
-            .expect(format!("cannot convert gate expression of {}", sgname).as_str());
-        quote! { meta.create_gate(#sgname, |meta| { vec![#ge] }); }
-    });
+            let ge = convert_to_gate_expression(gate)
+                .expect(format!("cannot convert gate expression of {}", sgname).as_str());
+            quote! { meta.create_gate(#sgname, |meta| { vec![#ge] }); }
+        })
+        .collect()
+}
 
-    let lookup_creates = cs.lookups.iter().map(|lookup| {
-        let name = lookup.name.as_str();
-        let map = lookup.map.iter().map(|(exp, col)| {
-            let colname = col.name.as_str();
-            let ge = convert_to_gate_expression(exp)
-                .expect(format!("cannot convert lookup expression of {}", name).as_str());
-            quote! { (#ge, config.get_table_lookup(&#colname).unwrap()) }
-        });
-        quote! {
-            meta.lookup(|meta| {
-                vec![#(#map),*]
+fn get_circuit_lookup_creates(cs: &SimplifiedConstraitSystem) -> Vec<TokenStream> {
+    cs.lookups
+        .iter()
+        .map(|lookup| {
+            let name = lookup.name.as_str();
+            let map = lookup.map.iter().map(|(exp, col)| {
+                let colname = col.name.as_str();
+                let ge = convert_to_gate_expression(exp)
+                    .expect(format!("cannot convert lookup expression of {}", name).as_str());
+                quote! { (#ge, config.get_table_lookup(&#colname).unwrap()) }
             });
-        }
-    });
+            quote! {
+                meta.lookup(|meta| {
+                    vec![#(#map),*]
+                });
+            }
+        })
+        .collect()
+}
+
+fn get_circuit_configure(cs: &SimplifiedConstraitSystem) -> TokenStream {
+    let instance_push = get_circuit_instances_push(cs);
+
+    let type_pushes = get_circuit_type_pushes(cs);
+
+    let gate_creates = get_circuit_gate_creates(cs);
+
+    let lookup_creates = get_circuit_lookup_creates(cs);
 
     quote! {
         fn configure(meta: &mut ConstraintSystem<F>) -> Self::Config {
@@ -157,10 +183,10 @@ fn get_circuit_configure(cs: &SimplifiedConstraitSystem) -> TokenStream {
 
             #instance_push
 
-            // build columns
+            /// build columns
             #(#type_pushes;)*
 
-            // enable_equality
+            /// enable_equality
             for c in advices.clone() {
                 meta.enable_equality(c.1);
             }
@@ -178,10 +204,10 @@ fn get_circuit_configure(cs: &SimplifiedConstraitSystem) -> TokenStream {
                 _marker: PhantomData,
             };
 
-            // build gates
+            /// build gates
             #(#gate_creates;)*
 
-            // build lookups
+            /// build lookups
             #(#lookup_creates;)*
 
             config
@@ -189,134 +215,148 @@ fn get_circuit_configure(cs: &SimplifiedConstraitSystem) -> TokenStream {
     }
 }
 
-fn get_circuit_synthesize(cs: &SimplifiedConstraitSystem) -> TokenStream {
-    let regions = cs.regions.iter().map(|region| {
-        let ins = region.instructions.iter().map(|ins| match ins {
-            crate::system::Instruction::EnableSelector(c) => {
-                let colname = c.column.name.as_str();
-                let idx = c.index as usize;
-                quote! {
-                    config.get_selector(&#colname)?
-                        .enable(&mut region, #idx)?;
+fn get_circuit_synthesize_regions(cs: &SimplifiedConstraitSystem) -> Vec<TokenStream> {
+    cs.regions
+        .iter()
+        .map(|region| {
+            let ins = region.instructions.iter().map(|ins| match ins {
+                crate::system::Instruction::EnableSelector(c) => {
+                    let colname = c.column.name.as_str();
+                    let idx = c.index as usize;
+                    quote! {
+                        config.get_selector(&#colname)?
+                            .enable(&mut region, #idx)?;
+                    }
                 }
+                crate::system::Instruction::AssignFixed(f, exp) => {
+                    let colname = f.column.name.as_str();
+                    let cellname = f.name.as_str();
+                    let idx = f.index as usize;
+                    let exp = convert_to_value(exp);
+                    quote! {
+                        let acell = region.assign_fixed(
+                            || "fixed",
+                            config.get_fixed(&#colname)?,
+                            #idx,
+                            || #exp,
+                        )?;
+                        config.acells.push((#cellname.to_string(), acell));
+                    }
+                }
+                crate::system::Instruction::AssignAdvice(a, exp) => {
+                    let colname = a.column.name.as_str();
+                    let cellname = a.name.as_str();
+                    let idx = a.index as usize;
+                    let exp = convert_to_value(exp);
+                    quote! {
+                        let acell = region.assign_advice(
+                            || "advice",
+                            config.get_advice(&#colname)?,
+                            #idx ,
+                            || #exp,
+                        )?;
+                        config.acells.push((#cellname.to_string(), acell));
+                    }
+                }
+                crate::system::Instruction::AssignAdviceFromInstance(a, b) => {
+                    let colname_a = a.column.name.as_str();
+                    let idx_a = a.index as usize;
+                    let colname_b = b.column.name.as_str();
+                    let idx_b = b.index as usize;
+                    let cellname = a.name.as_str();
+                    quote! {
+                        let acell = region.assign_advice_from_instance(
+                            || "instance",
+                            config.get_instance(&#colname_b)?,
+                            #idx_b ,
+                            config.get_advice(&#colname_a)?,
+                            #idx_a ,
+                        )?;
+                        config.acells.push((#cellname.to_string(), acell));
+                    }
+                }
+                crate::system::Instruction::ConstrainEqual(a, b) => {
+                    let cellname_a = a.name.as_str();
+                    let cellname_b = b.name.as_str();
+                    quote! {
+                        let acell = config.get_assigned_cell(#cellname_a);
+                        let bcell = config.get_assigned_cell(#cellname_b);
+                        region.constrain_equal(acell.cell(), bcell.cell())?;
+                    }
+                }
+                crate::system::Instruction::AssignCell(_, _) => todo!("illegal instruction"),
+                crate::system::Instruction::AssignAdviceFromConstant(_, _) => todo!(),
+                crate::system::Instruction::ConstrainConstant() => todo!(),
+            });
+
+            let region_name = region.name.clone();
+            quote! {
+                layouter.assign_region(
+                    || #region_name,
+                    |mut region| {
+                        #(#ins;)*
+                        Ok(())
+                    }
+                )?
             }
-            crate::system::Instruction::AssignFixed(f, exp) => {
-                let colname = f.column.name.as_str();
-                let cellname = f.name.as_str();
-                let idx = f.index as usize;
-                let exp = convert_to_value(exp);
-                quote! {
-                    let acell = region.assign_fixed(
-                        || "fixed",
-                        config.get_fixed(&#colname)?,
+        })
+        .collect()
+}
+
+fn get_circuit_synthesize_tables(cs: &SimplifiedConstraitSystem) -> Vec<TokenStream> {
+    let mut max_indexes = HashMap::<&str, usize>::new();
+    cs.tables
+        .iter()
+        .map(|t| {
+            let ins = t.instructions.iter().map(|ins| match ins {
+                crate::system::Instruction::AssignCell(a, b) => {
+                    let idx = max_indexes.get_mut(a.name.as_str());
+                    let idx = match idx {
+                        Some(i) => {
+                            *i += 1;
+                            *i
+                        }
+                        None => {
+                            let name = Box::leak(a.name.clone().into_boxed_str());
+                            max_indexes.insert(name, 0);
+                            0
+                        }
+                    };
+
+                    let cell_name = a.name.clone();
+                    let exp = convert_to_value(&CellExpression::Constant(b.clone()));
+                    quote! {
+                    table.assign_cell(
+                        || #cell_name,
+                        config.get_table_lookup(#cell_name)?,
                         #idx,
                         || #exp,
                     )?;
-                    config.acells.push((#cellname.to_string(), acell));
-                }
-            }
-            crate::system::Instruction::AssignAdvice(a, exp) => {
-                let colname = a.column.name.as_str();
-                let cellname = a.name.as_str();
-                let idx = a.index as usize;
-                let exp = convert_to_value(exp);
-                quote! {
-                    let acell = region.assign_advice(
-                        || "advice",
-                        config.get_advice(&#colname)?,
-                        #idx ,
-                        || #exp,
-                    )?;
-                    config.acells.push((#cellname.to_string(), acell));
-                }
-            }
-            crate::system::Instruction::AssignAdviceFromInstance(a, b) => {
-                let colname_a = a.column.name.as_str();
-                let idx_a = a.index as usize;
-                let colname_b = b.column.name.as_str();
-                let idx_b = b.index as usize;
-                let cellname = a.name.as_str();
-                quote! {
-                    let acell = region.assign_advice_from_instance(
-                        || "instance",
-                        config.get_instance(&#colname_b)?,
-                        #idx_b ,
-                        config.get_advice(&#colname_a)?,
-                        #idx_a ,
-                    )?;
-                    config.acells.push((#cellname.to_string(), acell));
-                }
-            }
-            crate::system::Instruction::ConstrainEqual(a, b) => {
-                let cellname_a = a.name.as_str();
-                let cellname_b = b.name.as_str();
-                quote! {
-                    let acell = config.get_assigned_cell(#cellname_a);
-                    let bcell = config.get_assigned_cell(#cellname_b);
-                    region.constrain_equal(acell.cell(), bcell.cell())?;
-                }
-            }
-            crate::system::Instruction::AssignCell(_, _) => todo!("illegal instruction"),
-            crate::system::Instruction::AssignAdviceFromConstant(_, _) => todo!(),
-            crate::system::Instruction::ConstrainConstant() => todo!(),
-        });
 
-        let region_name = region.name.clone();
-        quote! {
-            layouter.assign_region(
-                || #region_name,
-                |mut region| {
-                    #(#ins;)*
-                    Ok(())
-                }
-            )?
-        }
-    });
-
-    let mut max_indexes = HashMap::<&str, usize>::new();
-    let tables = cs.tables.iter().map(|t| {
-        let ins = t.instructions.iter().map(|ins| match ins {
-            crate::system::Instruction::AssignCell(a, b) => {
-                let idx = max_indexes.get_mut(a.name.as_str());
-                let idx = match idx {
-                    Some(i) => {
-                        *i += 1;
-                        *i
                     }
-                    None => {
-                        let name = Box::leak(a.name.clone().into_boxed_str());
-                        max_indexes.insert(name, 0);
-                        0
-                    }
-                };
+                }
+                _ => todo!("illegal instruction"),
+            });
 
-                let cell_name = a.name.clone();
-                let exp = convert_to_value(&CellExpression::Constant(b.clone()));
-                quote! {
-                table.assign_cell(
-                    || #cell_name,
-                    config.get_table_lookup(#cell_name)?,
-                    #idx,
-                    || #exp,
+            let table_name = t.name.clone();
+
+            quote! {
+                layouter.assign_table(
+                    || #table_name,
+                    |mut table| {
+                        #(#ins;)*
+                        Ok(())
+                    },
                 )?;
-
-                }
             }
-            _ => todo!("illegal instruction"),
-        });
+        })
+        .collect()
+}
 
-        let table_name = t.name.clone();
+fn get_circuit_synthesize(cs: &SimplifiedConstraitSystem) -> TokenStream {
+    let regions = get_circuit_synthesize_regions(cs);
 
-        quote! {
-            layouter.assign_table(
-                || #table_name,
-                |mut table| {
-                    #(#ins;)*
-                    Ok(())
-                },
-            )?;
-        }
-    });
+    let tables = get_circuit_synthesize_tables(cs);
 
     quote! {
         fn synthesize(

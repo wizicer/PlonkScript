@@ -1,6 +1,7 @@
 #![allow(unused_imports)]
 #![allow(dead_code)]
 #![allow(unused_mut)]
+#![allow(unused_doc_comments)]
 use std::marker::PhantomData;
 use std::{collections::HashMap, io};
 use halo2_proofs::{
@@ -35,6 +36,7 @@ impl<F: PrimeField> Circuit<F> for MyCircuit<F> {
         let mut lookups = Vec::new();
         let acells = Vec::new();
         instances.push(("defins".to_string(), meta.instance_column()));
+        /// build columns
         advices.push(("in1_dec".to_string(), meta.advice_column()));
         advices.push(("in2_dec".to_string(), meta.advice_column()));
         advices.push(("out_dec".to_string(), meta.advice_column()));
@@ -45,6 +47,7 @@ impl<F: PrimeField> Circuit<F> for MyCircuit<F> {
         selectors.push(("gate_0".to_string(), meta.selector()));
         selectors.push(("gate_1".to_string(), meta.selector()));
         selectors.push(("gate_2".to_string(), meta.selector()));
+        /// enable_equality
         for c in advices.clone() {
             meta.enable_equality(c.1);
         }
@@ -60,6 +63,7 @@ impl<F: PrimeField> Circuit<F> for MyCircuit<F> {
             acells,
             _marker: PhantomData,
         };
+        /// build gates
         meta.create_gate(
             "gate_0",
             |meta| {
@@ -102,6 +106,7 @@ impl<F: PrimeField> Circuit<F> for MyCircuit<F> {
                 ]
             },
         );
+        /// build lookups
         meta.lookup(|meta| {
             vec![
                 ((config.query_column(meta, ColumnType::Advice, "in1_dec", 0i64).unwrap()
