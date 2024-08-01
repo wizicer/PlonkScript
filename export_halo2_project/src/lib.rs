@@ -8,20 +8,6 @@ use halo2_proofs::{
     circuit::{floor_planner::V1, *},
     pasta::group::ff::PrimeField, plonk::*, poly::Rotation,
 };
-#[derive(Default, Debug)]
-pub struct MyCircuit<F: PrimeField> {
-    pub _marker: PhantomData<F>,
-}
-#[derive(Debug, Clone)]
-pub struct CommonConfig<F: PrimeField> {
-    advices: Vec<(String, Column<Advice>)>,
-    fixeds: Vec<(String, Column<Fixed>)>,
-    selectors: Vec<(String, Selector)>,
-    instances: Vec<(String, Column<Instance>)>,
-    lookups: Vec<(String, TableColumn)>,
-    acells: Vec<(String, AssignedCell<F, F>)>,
-    _marker: PhantomData<F>,
-}
 impl<F: PrimeField> Circuit<F> for MyCircuit<F> {
     type Config = CommonConfig<F>;
     type FloorPlanner = V1;
@@ -382,6 +368,20 @@ impl<F: PrimeField> Circuit<F> for MyCircuit<F> {
             )?;
         Ok(())
     }
+}
+#[derive(Default, Debug)]
+pub struct MyCircuit<F: PrimeField> {
+    pub _marker: PhantomData<F>,
+}
+#[derive(Debug, Clone)]
+pub struct CommonConfig<F: PrimeField> {
+    advices: Vec<(String, Column<Advice>)>,
+    fixeds: Vec<(String, Column<Fixed>)>,
+    selectors: Vec<(String, Selector)>,
+    instances: Vec<(String, Column<Instance>)>,
+    lookups: Vec<(String, TableColumn)>,
+    acells: Vec<(String, AssignedCell<F, F>)>,
+    _marker: PhantomData<F>,
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ColumnType {
