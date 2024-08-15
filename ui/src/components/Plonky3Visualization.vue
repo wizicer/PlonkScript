@@ -92,7 +92,7 @@
                 <br />
                 gates:
                 <div
-                  v-for="(g, i) in getGates(props.value.row, props.value.col)"
+                  v-for="(g, i) in getGates(props.value.row, props.value.col, true)"
                   :key="i"
                 >
                   <span class="gate_hljs" v-html="g"></span>
@@ -173,7 +173,7 @@ function noConstraint(row: number, col: number) {
   return getGates(row, col).length == 0;
 }
 
-function getGates(row: number, col: number): string[] {
+function getGates(row: number, col: number, highlight = false): string[] {
   let clabel: string;
   try {
     clabel = makeSubscript(columns.value[col + 1].label);
@@ -182,20 +182,26 @@ function getGates(row: number, col: number): string[] {
     return [];
   }
   if (!exps.value) return [];
-  return exps.value.filter(
-    (_) =>
-      (_.includes(clabel) &&
-        !_.includes('IsFirstRow') &&
-        !_.includes('IsTransition') &&
-        !_.includes('IsLastRow')) ||
-      (row == 0 && _.includes(clabel) && _.includes('IsFirstRow')) ||
-      (row != rows.value.length - 1 &&
-        _.includes(clabel) &&
-        _.includes('IsTransition')) ||
-      (row == rows.value.length - 1 &&
-        _.includes(clabel) &&
-        _.includes('IsLastRow'))
-  );
+  return exps.value
+    .filter(
+      (_) =>
+        (_.includes(clabel) &&
+          !_.includes('IsFirstRow') &&
+          !_.includes('IsTransition') &&
+          !_.includes('IsLastRow')) ||
+        (row == 0 && _.includes(clabel) && _.includes('IsFirstRow')) ||
+        (row != rows.value.length - 1 &&
+          _.includes(clabel) &&
+          _.includes('IsTransition')) ||
+        (row == rows.value.length - 1 &&
+          _.includes(clabel) &&
+          _.includes('IsLastRow'))
+    )
+    .map((_) =>
+      highlight
+        ? _.replaceAll(clabel, `<span class="hljs-current">${clabel}</span>`)
+        : _
+    );
 }
 
 watch(
@@ -223,6 +229,9 @@ loadData(props.data);
 }
 
 .gate_hljs {
+  :deep(.hljs-current) {
+    color: $light-green-9;
+  }
   :deep(.hljs-fixed) {
     color: $light-blue-7;
   }
