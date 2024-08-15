@@ -20,7 +20,11 @@ std::io::Write::write_all(&mut file, _output.as_bytes()).unwrap(); // [!code ++]
 data.verify(proof) // [!code ++]
 ```
 
-You also need to modify `PartitionWitness` in `plonky2/src/iop/witness.rs` to include Debug, like this:
+::: tip
+ONLY if you work with older version plonky2, you need following changes, latest plonky2 already includes these changes.
+:::
+
+Modify `PartitionWitness` in `plonky2/src/iop/witness.rs` to include Debug, like this:
 
 ```rust
 #[derive(Clone)] // [!code --]
