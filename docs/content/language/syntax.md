@@ -18,8 +18,4 @@ let /* intruder comment */ name = "Bob";
    multiple lines, so it
    only makes sense that
    it is even more important */
-
-/* Fear not, Rhai satisfies all nesting needs with nested comments:
-   /*/*/*/*/**/*/*/*/*/
-*/
 ```
