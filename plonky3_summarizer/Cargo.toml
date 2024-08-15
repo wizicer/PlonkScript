@@ -1,0 +1,27 @@
+[package]
+name = "plonky3_summarizer"
+version = "0.0.1"
+edition = "2021"
+description = "A summarizer for Plonky3's output"
+license = "MIT"
+homepage = "https://plonk.pro"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde = "*"
+serde_json = "*"
+# p3-uni-stark = { path = "../vendor/plonky3/uni-stark" }
+# p3-field = { path = "../vendor/plonky3/field" }
+# p3-matrix = { path = "../vendor/plonky3/matrix" }
+# p3-air = { path = "../vendor/plonky3/air" }
+
+p3-uni-stark = "0.1.0"
+p3-field = "0.1.0"
+p3-matrix = "0.1.0"
+p3-air = "0.1.0"
+
+# p3-uni-stark = "0.1.3-succinct"
+# p3-field = "0.1.3-succinct"
+# p3-matrix = "0.1.3-succinct"
+# p3-air = "0.1.3-succinct"
