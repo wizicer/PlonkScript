@@ -16,6 +16,11 @@ const routes: RouteRecordRaw[] = [
         component: () => import('pages/Plonky2AnalyzerPage.vue'),
       },
       {
+        name: 'plonky3analyzer',
+        path: '/analyzer/plonky3',
+        component: () => import('pages/Plonky3AnalyzerPage.vue'),
+      },
+      {
         name: 'editor',
         path: '/editor',
         component: () => import('pages/EditorPage.vue'),

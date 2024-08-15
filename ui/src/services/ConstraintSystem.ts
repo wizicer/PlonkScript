@@ -135,7 +135,7 @@ export interface LookupLiteralExpression {
   table_expressions: string[];
 }
 
-function quoteIfIncludeAddSub(exp: string): string {
+export function quoteIfIncludeAddSub(exp: string): string {
   let rm = exp;
   while (rm.indexOf('(') >= 0) {
     rm = rm.replaceAll(/\([^\(\)]*?\)/g, '');

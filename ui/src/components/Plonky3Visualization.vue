@@ -1,0 +1,248 @@
+<template>
+  <div v-if="!data"></div>
+  <div v-else>
+    <div class="q-pa-md row" style="max-width: 800px">
+      <q-list padding bordered class="rounded-borders">
+        <q-expansion-item
+          dense
+          dense-toggle
+          expand-separator
+          icon="assessment"
+          label="gates"
+          default-opened
+        >
+          <q-card>
+            <q-card-section>
+              <q-table
+                :rows="exps"
+                :columns="[
+                  {
+                    name: 'gates',
+                    label: 'Gates',
+                    align: 'left',
+                    field: (r) => r,
+                  },
+                ]"
+                flat
+                bordered
+                dense
+                class="full-width"
+                :pagination="{ rowsPerPage: Number.MAX_SAFE_INTEGER, page: 1 }"
+                :hide-pagination="true"
+                :hide-header="true"
+              >
+                <template v-slot:body-cell="props">
+                  <q-td :props="props">
+                    <span class="gate_hljs" v-html="props.value"></span>
+                  </q-td>
+                </template>
+              </q-table>
+            </q-card-section>
+            <!-- <q-card-section>
+              <q-checkbox
+                v-model="showOtherColumns"
+                label="Show Other Columns"
+              />
+            </q-card-section> -->
+          </q-card>
+        </q-expansion-item>
+      </q-list>
+    </div>
+
+    <div class="q-pa-md row">
+      <q-table
+        :rows="rows"
+        :columns="columns"
+        row-key="name"
+        flat
+        bordered
+        dense
+        :pagination="pagination"
+        :hide-pagination="rows.length <= MAXROWS"
+        class="float-left"
+      >
+        <template v-slot:body-cell-index="props">
+          <q-td>
+            {{ props.value }}
+          </q-td>
+        </template>
+        <template v-slot:body-cell="props">
+          <q-td :props="props">
+            <q-badge
+              v-if="props.value"
+              :label="props.value.value"
+              :color="
+                noConstraint(props.value.row, props.value.col)
+                  ? 'grey'
+                  : 'primary'
+              "
+              class="ellipsis"
+            >
+              <q-tooltip
+                class="bg-indigo-1 text-black"
+                :delay="showTooltip ? 0 : 100000"
+              >
+                value: {{ props.value.value }}
+                <br />
+                index: {{ props.value.index }}
+                <br />
+                row: {{ props.value.row }}
+                <br />
+                col: {{ props.value.col }}
+                <br />
+                gates:
+                <div
+                  v-for="(g, i) in getGates(props.value.row, props.value.col)"
+                  :key="i"
+                >
+                  <span class="gate_hljs" v-html="g"></span>
+                </div>
+              </q-tooltip>
+            </q-badge>
+          </q-td>
+        </template>
+        <template v-slot:header-cell="props">
+          <q-th :props="props">
+            <span v-html="makeSubscript(props.col.label)"></span>
+          </q-th>
+        </template>
+      </q-table>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { Ref, computed, ref, watch } from 'vue';
+import { QTableColumn } from 'quasar';
+import { Plonky3Data, WholeRow } from 'src/services/plonky3/DefaultModels';
+import {
+  getColumns,
+  getRows,
+  stringifySymExp,
+} from 'src/services/plonky3/WitnessVisualization';
+import { registerGateLanguage } from 'src/services/GateLanguage';
+import hljs from 'highlight.js';
+registerGateLanguage();
+
+export interface Plonky3VisualizationProps {
+  data?: Plonky3Data;
+}
+const props = withDefaults(defineProps<Plonky3VisualizationProps>(), {
+  data: undefined,
+});
+
+const MAXROWS = ref(1024);
+
+const pagination = ref({
+  page: 1,
+  rowsPerPage: MAXROWS.value,
+});
+const columns: Ref<QTableColumn[]> = ref([]);
+
+const showTooltip = ref(true);
+
+const rows: Ref<WholeRow[]> = ref([]);
+
+const exps: Ref<string[] | undefined> = ref(undefined);
+const isTooBig = ref(false);
+
+function loadData(data?: Plonky3Data) {
+  if (!data) {
+    console.warn('empty data');
+    return;
+  }
+  if (Number(data.trace.values.length / data.trace.width) > 1024) {
+    isTooBig.value = true;
+    return;
+  }
+  exps.value = data.symbols.map((s) =>
+    makeSubscript(
+      hljs.highlight(stringifySymExp(s), { language: 'gate' }).value
+    )
+  );
+  columns.value = getColumns(data.trace.width);
+  rows.value = getRows(data.trace.values, data.trace.width);
+}
+
+function makeSubscript(s: string | undefined) {
+  if (!s) return '';
+  return s.replace(/_([0-9]+)/g, '<sub>$1</sub>');
+}
+
+function noConstraint(row: number, col: number) {
+  return getGates(row, col).length == 0;
+}
+
+function getGates(row: number, col: number): string[] {
+  let clabel: string;
+  try {
+    clabel = makeSubscript(columns.value[col + 1].label);
+  } catch (e) {
+    console.warn(col, columns.value, e);
+    return [];
+  }
+  if (!exps.value) return [];
+  return exps.value.filter(
+    (_) =>
+      (_.includes(clabel) &&
+        !_.includes('IsFirstRow') &&
+        !_.includes('IsTransition') &&
+        !_.includes('IsLastRow')) ||
+      (row == 0 && _.includes(clabel) && _.includes('IsFirstRow')) ||
+      (row != rows.value.length - 1 &&
+        _.includes(clabel) &&
+        _.includes('IsTransition')) ||
+      (row == rows.value.length - 1 &&
+        _.includes(clabel) &&
+        _.includes('IsLastRow'))
+  );
+}
+
+watch(
+  () => props.data,
+  (newValue, oldValue) => {
+    if (newValue == oldValue) return;
+    if (!newValue) {
+      rows.value = [];
+      columns.value = [];
+      return;
+    }
+    loadData(newValue);
+  }
+);
+
+loadData(props.data);
+</script>
+
+<style scoped lang="scss">
+.ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 40px;
+}
+
+.gate_hljs {
+  :deep(.hljs-fixed) {
+    color: $light-blue-7;
+  }
+  :deep(.hljs-advice) {
+    color: $deep-orange-7;
+  }
+  :deep(.hljs-hex) {
+    color: $teal-8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 6rem;
+    display: inline-block;
+    vertical-align: bottom;
+  }
+  :deep(.hljs-prev-rotation) {
+    color: $green-14;
+  }
+  :deep(.hljs-next-rotation) {
+    color: $indigo-14;
+  }
+}
+</style>

@@ -27,11 +27,12 @@
           label="Analyzer"
           stretch
           :flat="
-            $route.name != 'plonky2analyzer' && $route.name != 'halo2analyzer'
+            $route.name != 'plonky3analyzer' && $route.name != 'plonky2analyzer' && $route.name != 'halo2analyzer'
           "
           class="menu-button"
           :class="{
             active:
+              $route.name === 'plonky3analyzer' ||
               $route.name === 'plonky2analyzer' ||
               $route.name === 'halo2analyzer',
           }"
@@ -46,6 +47,12 @@
             <q-item clickable v-close-popup :to="{ name: 'plonky2analyzer' }">
               <q-item-section>
                 <q-item-label>Plonky2 Analyzer</q-item-label>
+              </q-item-section>
+            </q-item>
+
+            <q-item clickable v-close-popup :to="{ name: 'plonky3analyzer' }">
+              <q-item-section>
+                <q-item-label>Plonky3 Analyzer</q-item-label>
               </q-item-section>
             </q-item>
           </q-list>
