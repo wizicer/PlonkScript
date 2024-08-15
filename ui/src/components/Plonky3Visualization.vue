@@ -27,8 +27,8 @@
                 bordered
                 dense
                 class="full-width"
-                :pagination="{ rowsPerPage: Number.MAX_SAFE_INTEGER, page: 1 }"
-                :hide-pagination="true"
+                :pagination="gatePagination"
+                :hide-pagination="(exps?.length ?? 0) <= MAXGATEROWS"
                 :hide-header="true"
               >
                 <template v-slot:body-cell="props">
@@ -92,7 +92,11 @@
                 <br />
                 gates:
                 <div
-                  v-for="(g, i) in getGates(props.value.row, props.value.col, true)"
+                  v-for="(g, i) in getGates(
+                    props.value.row,
+                    props.value.col,
+                    true
+                  )"
                   :key="i"
                 >
                   <span class="gate_hljs" v-html="g"></span>
@@ -132,7 +136,12 @@ const props = withDefaults(defineProps<Plonky3VisualizationProps>(), {
 });
 
 const MAXROWS = ref(1024);
+const MAXGATEROWS = ref(10);
 
+const gatePagination = ref({
+  page: 1,
+  rowsPerPage: MAXGATEROWS.value,
+});
 const pagination = ref({
   page: 1,
   rowsPerPage: MAXROWS.value,
