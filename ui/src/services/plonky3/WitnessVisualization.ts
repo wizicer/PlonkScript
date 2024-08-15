@@ -103,9 +103,9 @@ function stringifyEntry(entry: Entry, index: number): string {
     case 'Permutation':
       return `p_${index}${getOffsetSuffix(entry.offset)}`;
     case 'Public':
-      return 'public';
+      return `i_${index}`;
     case 'Challenge':
-      return 'challenge';
+      return `c_${index}`;
     default:
       throw new Error(`Unknown Entry type: ${entry}`);
   }

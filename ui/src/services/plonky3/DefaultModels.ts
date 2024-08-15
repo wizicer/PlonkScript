@@ -14,6 +14,7 @@ export type Plonky3Data = All<Num>;
 interface All<F> {
   symbols: SymbolicExpression<F>[];
   trace: DenseMatrix<F>;
+  public: Array<F>
 }
 
 export interface DenseMatrix<F> {

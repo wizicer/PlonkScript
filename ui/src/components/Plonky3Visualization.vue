@@ -8,7 +8,7 @@
           dense-toggle
           expand-separator
           icon="assessment"
-          label="gates"
+          label="Constaints (Gates)"
           default-opened
         >
           <q-card>
@@ -44,6 +44,49 @@
                 label="Show Other Columns"
               />
             </q-card-section> -->
+          </q-card>
+        </q-expansion-item>
+        <q-expansion-item
+          dense
+          dense-toggle
+          expand-separator
+          icon="query_stats"
+          label="Public inputs (Instances)"
+          default-opened
+        >
+          <q-card>
+            <q-card-section>
+              <q-table
+                :rows="pubs"
+                :columns="[
+                  {
+                    name: 'name',
+                    label: 'Name',
+                    align: 'left',
+                    field: 'name',
+                  },
+                  {
+                    name: 'value',
+                    label: 'Value',
+                    align: 'left',
+                    field: 'value',
+                  },
+                ]"
+                flat
+                bordered
+                dense
+                class="full-width"
+                :pagination="instancePagination"
+                :hide-pagination="(pubs?.length ?? 0) <= MAXINSTANCEROWS"
+                :hide-header="true"
+              >
+                <template v-slot:body-cell-name="props">
+                  <q-td :props="props">
+                    <span v-html="makeSubscript(props.value)"></span>
+                  </q-td>
+                </template>
+              </q-table>
+            </q-card-section>
           </q-card>
         </q-expansion-item>
       </q-list>
@@ -137,10 +180,15 @@ const props = withDefaults(defineProps<Plonky3VisualizationProps>(), {
 
 const MAXROWS = ref(1024);
 const MAXGATEROWS = ref(10);
+const MAXINSTANCEROWS = ref(10);
 
 const gatePagination = ref({
   page: 1,
   rowsPerPage: MAXGATEROWS.value,
+});
+const instancePagination = ref({
+  page: 1,
+  rowsPerPage: MAXINSTANCEROWS.value,
 });
 const pagination = ref({
   page: 1,
@@ -153,6 +201,7 @@ const showTooltip = ref(true);
 const rows: Ref<WholeRow[]> = ref([]);
 
 const exps: Ref<string[] | undefined> = ref(undefined);
+const pubs: Ref<{ name: string; value: number }[] | undefined> = ref(undefined);
 const isTooBig = ref(false);
 
 function loadData(data?: Plonky3Data) {
@@ -171,6 +220,7 @@ function loadData(data?: Plonky3Data) {
   );
   columns.value = getColumns(data.trace.width);
   rows.value = getRows(data.trace.values, data.trace.width);
+  pubs.value = data.public.map((_, i) => ({ name: `i_${i}`, value: _ }));
 }
 
 function makeSubscript(s: string | undefined) {
