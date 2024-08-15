@@ -73,6 +73,7 @@ export default defineConfig({
         items: [
           { text: "Halo2", link: "/analyzer/halo2" },
           { text: "Plonky2", link: "/analyzer/plonky2" },
+          { text: "Plonky3", link: "/analyzer/plonky3" },
         ],
       },
       // {
