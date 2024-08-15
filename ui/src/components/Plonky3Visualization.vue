@@ -127,23 +127,22 @@
               >
                 value: {{ props.value.value }}
                 <br />
-                index: {{ props.value.index }}
-                <br />
-                row: {{ props.value.row }}
-                <br />
-                col: {{ props.value.col }}
+                index: {{ props.value.index }} ({{ props.value.row }},
+                {{ props.value.col }})
                 <br />
                 gates:
-                <div
-                  v-for="(g, i) in getGates(
-                    props.value.row,
-                    props.value.col,
-                    true
-                  )"
-                  :key="i"
-                >
-                  <span class="gate_hljs" v-html="g"></span>
-                </div>
+                <ul>
+                  <li
+                    v-for="(g, i) in getGates(
+                      props.value.row,
+                      props.value.col,
+                      true
+                    )"
+                    :key="i"
+                  >
+                    <span class="gate_hljs" v-html="g"></span>
+                  </li>
+                </ul>
               </q-tooltip>
             </q-badge>
           </q-td>
