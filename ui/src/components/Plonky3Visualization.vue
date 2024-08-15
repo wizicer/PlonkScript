@@ -131,7 +131,7 @@
                 {{ props.value.col }})
                 <br />
                 gates:
-                <ul>
+                <ul class="tooltip_gate_list">
                   <li
                     v-for="(g, i) in getGates(
                       props.value.row,
@@ -158,7 +158,7 @@
 </template>
 
 <script setup lang="ts">
-import { Ref, computed, ref, watch } from 'vue';
+import { Ref, ref, watch } from 'vue';
 import { QTableColumn } from 'quasar';
 import { Plonky3Data, WholeRow } from 'src/services/plonky3/DefaultModels';
 import {
@@ -252,6 +252,11 @@ function getGates(row: number, col: number, highlight = false): string[] {
           _.includes(clabel) &&
           _.includes('IsTransition')) ||
         (row == rows.value.length - 1 &&
+          _.includes(
+            clabel + '</span><span class="hljs-next-rotation">[1]</span>'
+          ) &&
+          _.includes('IsTransition')) ||
+        (row == rows.value.length - 1 &&
           _.includes(clabel) &&
           _.includes('IsLastRow'))
     )
@@ -289,6 +294,7 @@ loadData(props.data);
 .gate_hljs {
   :deep(.hljs-current) {
     color: $light-green-9;
+    font-weight: bold;
   }
   :deep(.hljs-fixed) {
     color: $light-blue-7;
@@ -311,5 +317,11 @@ loadData(props.data);
   :deep(.hljs-next-rotation) {
     color: $indigo-14;
   }
+}
+
+ul.tooltip_gate_list {
+  margin: 0;
+  padding-inline-start: 0;
+  list-style-position: inside;
 }
 </style>
