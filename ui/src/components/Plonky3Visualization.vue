@@ -1,8 +1,13 @@
 <template>
   <div v-if="!data"></div>
   <div v-else>
-    <div class="q-pa-md row" style="max-width: 800px">
-      <q-list padding bordered class="rounded-borders">
+    <div class="q-pa-md row">
+      <q-list
+        padding
+        bordered
+        class="rounded-borders"
+        style="max-width: 1000px"
+      >
         <q-expansion-item
           dense
           dense-toggle
@@ -103,6 +108,7 @@
         :pagination="pagination"
         :hide-pagination="rows.length <= MAXROWS"
         class="float-left"
+        style="max-width: 1000px"
       >
         <template v-slot:body-cell-index="props">
           <q-td>
