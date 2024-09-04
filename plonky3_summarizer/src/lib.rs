@@ -36,7 +36,7 @@ fn symbol_to_json<F: Field>(symbol: &SymbolicExpression<F>) -> Value {
         SymbolicExpression::IsTransition => json!({ "type": "IsTransition" }),
         SymbolicExpression::Constant(val) => json!({
             "type": "Constant",
-            "value": val,
+            "value": format!("{val}"),
         }),
         SymbolicExpression::Add {
             x,
@@ -84,7 +84,7 @@ fn all_to_json<F: Field>(
     json!({
         "symbols": symbols.iter().map(|symbol| symbol_to_json(symbol)).collect::<Vec<_>>(),
         "trace": {
-            "values": trace.values,
+            "values": trace.values.iter().map(|val| format!("{val}")).collect::<Vec<_>>(),
             "width": trace.width,
         },
         "public": public_values,
