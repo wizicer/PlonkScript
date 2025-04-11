@@ -86,7 +86,11 @@
               getColorByColName(props.col.name) +
               ' ' +
               getBorderOfRegion(props.value, props.col) +
-              (highlightedCells.includes(getCellId(props.col.name, props.rowIndex)) ? ' highlighted-cell' : '')
+              (highlightedCells.includes(
+                getCellId(props.col.name, props.rowIndex)
+              )
+                ? ' highlighted-cell'
+                : '')
             "
             :style="'border-color: ' + rmapcolor[props.value.region] + ';'"
             @mouseenter="highlightRelatedCells(props.col.name, props.rowIndex)"
@@ -305,11 +309,6 @@ function buildPermutationMap(data: MockProverData) {
     return;
   }
 
-  const colDict: Record<string, string> = columns.value.reduce(
-    (pv, cv) => ({ ...pv, [cv.name]: cv.field }),
-    {}
-  );
-
   const mapping = data.permutation.mapping;
   // ignore mapping when it's large
   if (mapping.reduce((pv, cv) => pv + cv.length, 0) > 500) return;
@@ -377,17 +376,19 @@ function loadData(data?: MockProverData) {
     regions.value = rr.regions;
     gates.value = rr.gates;
     lookups.value = rr.lookups.map((l) => ({
-      input_expressions: l.input_expressions.map(
-        (_) => formularize(hljs.highlight(_, { language: 'gate' }).value)
+      input_expressions: l.input_expressions.map((_) =>
+        formularize(hljs.highlight(_, { language: 'gate' }).value)
       ),
-      table_expressions: l.table_expressions.map(
-        (_) => formularize(hljs.highlight(_, { language: 'gate' }).value)
+      table_expressions: l.table_expressions.map((_) =>
+        formularize(hljs.highlight(_, { language: 'gate' }).value)
       ),
     }));
     Object.keys(gates.value).forEach(function (key) {
       gates.value[key] = gates.value[key].map((g) => ({
         name: g.name,
-        literal: formularize(hljs.highlight(g.literal, { language: 'gate' }).value),
+        literal: formularize(
+          hljs.highlight(g.literal, { language: 'gate' }).value
+        ),
         idx: g.idx,
       }));
     });
