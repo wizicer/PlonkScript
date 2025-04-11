@@ -9,25 +9,40 @@
       <template v-slot:before>
         <div class="q-pa-md">
           <!-- File tabs -->
-          <div class="row q-mb-md">
-            <q-tabs
-              v-model="activeTab"
-              dense
-              class="text-grey"
-              active-color="primary"
-              indicator-color="primary"
-              align="left"
-              narrow-indicator
-              style="flex-grow: 1"
-            >
-              <q-tab v-for="file in files" :key="file.id" :name="file.id" :label="file.name" />
+          <div class="row q-mb-md justify-between">
+            <div v-if="files.length > 1" style="flex-grow: 1">
+              <q-tabs
+                v-model="activeTab"
+                dense
+                class="text-grey"
+                active-color="primary"
+                indicator-color="primary"
+                align="left"
+                narrow-indicator
+              >
+                <q-tab
+                  v-for="file in files"
+                  :key="file.id"
+                  :name="file.id"
+                  :label="file.name"
+                />
+              </q-tabs>
+            </div>
+            <div v-else></div>
+            <div>
               <q-btn flat round dense icon="add" @click="addNewFile" />
-            </q-tabs>
+            </div>
           </div>
 
           <!-- File name input -->
-          <div v-if="activeFile" class="row q-mb-sm">
-            <q-input v-model="activeFile.name" dense class="q-mr-sm" style="width: 200px" label="File name" />
+          <div v-if="activeFile && files.length > 1" class="row q-mb-sm">
+            <q-input
+              v-model="activeFile.name"
+              dense
+              class="q-mr-sm"
+              style="width: 200px"
+              label="File name"
+            />
             <q-btn
               flat
               round
@@ -35,12 +50,16 @@
               icon="delete"
               color="negative"
               @click="removeCurrentFile"
-              :disable="files.length === 1 || activeFile.id === 'main'"
+              :disable="activeFile.id === 'main'"
             />
           </div>
 
           <!-- Single editor container -->
-          <div ref="editorContainer" id="editorContainer" style="height: 75vh; border: 1px solid #ddd"></div>
+          <div
+            ref="editorContainer"
+            id="editorContainer"
+            style="height: 75vh; border: 1px solid #ddd"
+          ></div>
         </div>
       </template>
 
@@ -128,7 +147,7 @@ out <== last_c;
 `;
 
 const splitPercent = ref(50);
-const activeTab = ref("main");
+const activeTab = ref('main');
 const editorContainer = ref<HTMLElement | null>(null);
 
 interface FileData {
@@ -139,11 +158,11 @@ interface FileData {
 }
 
 const files = ref<FileData[]>([
-  { id: "main", name: 'main.plonk', content: mainCode }
+  { id: 'main', name: 'main.plonk', content: mainCode },
 ]);
 
 const activeFile = computed(() => {
-  return files.value.find(f => f.id === activeTab.value);
+  return files.value.find((f) => f.id === activeTab.value);
 });
 
 let editor: monaco.editor.IStandaloneCodeEditor | null = null;
@@ -210,9 +229,9 @@ function updateEditorModel() {
 
 function runCode() {
   try {
-    const mainFile = files.value.find(f => f.id === "main");
+    const mainFile = files.value.find((f) => f.id === 'main');
     if (!mainFile) {
-      console.error("Main file not found");
+      console.error('Main file not found');
       return;
     }
 
@@ -227,7 +246,7 @@ function runCode() {
 
     const modules: Record<string, string> = {};
     for (const file of files.value) {
-      if (file.id !== "main") {
+      if (file.id !== 'main') {
         const moduleName = file.name.replace(/\.plonk$/, '');
         modules[moduleName] = file.content;
       }
@@ -235,7 +254,7 @@ function runCode() {
 
     const result = try_run({
       code: mainFile.content,
-      modules: modules
+      modules: modules,
     });
 
     vis.value = convertMockProverOutputToObject(result);
@@ -251,7 +270,7 @@ function addNewFile() {
   const newFile: FileData = {
     id: fileId,
     name: `module${files.value.length}.plonk`,
-    content: newContent
+    content: newContent,
   };
 
   if (monaco.editor) {
@@ -263,12 +282,16 @@ function addNewFile() {
 }
 
 function removeCurrentFile() {
-  if (!activeFile.value || activeFile.value.id === 'main' || files.value.length <= 1) {
+  if (
+    !activeFile.value ||
+    activeFile.value.id === 'main' ||
+    files.value.length <= 1
+  ) {
     return;
   }
 
   const fileIdToRemove = activeFile.value.id;
-  const index = files.value.findIndex(f => f.id === fileIdToRemove);
+  const index = files.value.findIndex((f) => f.id === fileIdToRemove);
   if (index === -1) return;
 
   if (activeFile.value.model) {
@@ -279,7 +302,7 @@ function removeCurrentFile() {
   }
 
   files.value.splice(index, 1);
-  activeTab.value = "main";
+  activeTab.value = 'main';
 }
 
 function updatePanel() {
