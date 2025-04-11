@@ -3,11 +3,6 @@
   <div v-else>
     <div class="q-pa-md">
       <q-checkbox v-model="showTooltip" label="Show Tooltip" />
-      <q-checkbox
-        v-model="showConstraints"
-        label="Show Constraints"
-        @click="toggleConstraints()"
-      />
 
       <h6>Region Table</h6>
       <table>
@@ -90,9 +85,12 @@
               'bg-' +
               getColorByColName(props.col.name) +
               ' ' +
-              getBorderOfRegion(props.value, props.col)
+              getBorderOfRegion(props.value, props.col) +
+              (highlightedCells.includes(getCellId(props.col.name, props.rowIndex)) ? ' highlighted-cell' : '')
             "
             :style="'border-color: ' + rmapcolor[props.value.region] + ';'"
+            @mouseenter="highlightRelatedCells(props.col.name, props.rowIndex)"
+            @mouseleave="clearHighlightedCells()"
           >
             <template
               v-for="(v, i) in Array.isArray(props.value.value)
@@ -142,7 +140,6 @@
 <script setup lang="ts">
 import { Ref, computed, ref, watch } from 'vue';
 import { QTableColumn } from 'quasar';
-import LeaderLine from 'leader-line-new';
 import {
   RowFieldType,
   getColumnDefinition,
@@ -150,11 +147,11 @@ import {
   MockProverData,
   getRowsAndRegions,
   RowFieldWithPosition,
-  getPermutationLines,
   GateLiteralExpression,
   RegionInfoEntity,
   LookupLiteralExpression,
   RowsAndRegionsResponse,
+  ColumnType,
 } from 'src/services/ConstraintSystem';
 import { registerGateLanguage } from 'src/services/GateLanguage';
 import hljs from 'highlight.js';
@@ -211,15 +208,6 @@ const pagination = ref({
 const columns: Ref<QTableColumn[]> = ref([]);
 
 const showTooltip = ref(false);
-const showConstraints = ref(false);
-
-function toggleConstraints() {
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    if (showConstraints.value) line.show();
-    else line.hide();
-  }
-}
 
 const rrr: Ref<RowsAndRegionsResponse | undefined> = ref(undefined);
 const rows: Ref<Record<string, RowFieldWithPosition>[]> = ref([]);
@@ -288,59 +276,73 @@ function getBorderOfRegion(
 }
 
 const cellBadges = ref<Record<string, Record<string, Element>>>({});
-const lines: LeaderLine[] = [];
+const highlightedCells = ref<string[]>([]);
+const permutationMap = ref<Record<string, string[]>>({});
 
-function drawLines(data: MockProverData) {
+function getCellId(colName: string, rowIndex: number): string {
+  return `${colName}-${rowIndex}`;
+}
+
+function highlightRelatedCells(colName: string, rowIndex: number) {
+  const cellId = getCellId(colName, rowIndex);
+  const relatedCells = permutationMap.value[cellId] || [];
+  highlightedCells.value = [cellId, ...relatedCells];
+}
+
+function clearHighlightedCells() {
+  highlightedCells.value = [];
+}
+
+function buildPermutationMap(data: MockProverData) {
   if (rows.value.length > 1024) {
     console.warn(
-      `rows is too many [${rows.value.length}], skip drawing permutation lines`
+      `rows is too many [${rows.value.length}], skip building permutation map`
     );
     return;
   }
 
-  const plines = getPermutationLines(
-    data,
-    cellBadges.value,
-    columns.value,
-    rows.value
+  const colDict: Record<string, string> = columns.value.reduce(
+    (pv, cv) => ({ ...pv, [cv.name]: cv.field }),
+    {}
   );
 
-  if (plines.length > 500) {
-    console.warn(
-      `permutation lines is too many [${plines.length}], skip drawing`
-    );
-    return;
-  }
-  for (let i = 0; i < plines.length; i++) {
-    const { fromValue, toValue, from, to } = plines[i];
+  const mapping = data.permutation.mapping;
+  // ignore mapping when it's large
+  if (mapping.reduce((pv, cv) => pv + cv.length, 0) > 500) return;
+  const cols = data.permutation.columns;
+  permutationMap.value = {};
 
-    const color = fromValue == toValue ? 'wheat' : 'crimson';
-    const outlineColor = fromValue == toValue ? 'tan' : 'coral';
+  for (let c = 0; c < mapping.length; c++) {
+    const mcol = mapping[c];
+    for (let r = 0; r < mcol.length; r++) {
+      const mrow = mcol[r];
+      const col = Number(mrow[0]);
+      const row = Number(mrow[1]);
 
-    const line = new LeaderLine(
-      LeaderLine.mouseHoverAnchor(from as HTMLElement, 'fade', {
-        style: {
-          backgroundImage: null,
-          backgroundColor: null,
-          paddingRight: null,
-        },
-        hoverStyle: {
-          backgroundColor: null,
-        },
-      }),
-      to,
-      {
-        color,
-        path: 'straight',
-        size: 4,
-        outline: true,
-        endPlug: 'behind',
-        outlineColor,
-        dash: { animation: true, gap: 4 },
+      // from pointed address(col, row) to current cell(c, r)
+      const tocolname = getColumnName(cols[c]);
+      const fromcolname = getColumnName(cols[col]);
+      if (fromcolname == tocolname && row == r) continue;
+
+      const fromCellId = getCellId(fromcolname, row);
+      const toCellId = getCellId(tocolname, r);
+
+      // Build bidirectional mapping
+      if (!permutationMap.value[fromCellId]) {
+        permutationMap.value[fromCellId] = [];
       }
-    );
-    lines.push(line);
+      if (!permutationMap.value[toCellId]) {
+        permutationMap.value[toCellId] = [];
+      }
+
+      permutationMap.value[fromCellId].push(toCellId);
+      permutationMap.value[toCellId].push(fromCellId);
+    }
   }
+}
+
+function getColumnName(col: ColumnType): string {
+  return `${col.column_type.toLowerCase()}-${col.index}`;
 }
 
 function loadData(data?: MockProverData) {
@@ -348,13 +350,15 @@ function loadData(data?: MockProverData) {
     console.warn('empty data');
     return;
   }
-  // console.log(data);
+
   rows.value = [];
   columns.value = [];
   gatesArray.value = [];
   selectedGates.value = [];
   lookups.value = [];
   showOtherColumns.value = false;
+  highlightedCells.value = [];
+  permutationMap.value = {};
 
   setTimeout(() => {
     const cols = getColumnDefinition(data);
@@ -407,13 +411,8 @@ function loadData(data?: MockProverData) {
       )
       .map((_) => _.name);
 
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      line.remove();
-    }
-    lines.length = 0;
+    buildPermutationMap(data);
   }, 100);
-  setTimeout(() => drawLines(data), 300);
 }
 
 watch(
@@ -443,6 +442,12 @@ $pos: left, right, top, bottom;
   .cell_border_#{$p} {
     border-#{$p}-width: 1px;
   }
+}
+
+.highlighted-cell {
+  position: relative;
+  box-shadow: inset 0 0 10px 2px rgba(255, 255, 0, 0.7) !important;
+  z-index: 2;
 }
 
 .gate_hljs {
