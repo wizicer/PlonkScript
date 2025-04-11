@@ -327,7 +327,7 @@ export function getColumns(cols: ColumnDefinition[]): QTableColumn[] {
     for (let i = 0; i < Number(col.num); i++) {
       columns.push({
         name: `${col.name}-${i}`,
-        label: `${col.label}_${i}`,
+        label: formularize(`${col.label}_${i}`),
         align: 'center',
         field: `${col.field}${i}`,
         sortable: false,
@@ -628,4 +628,9 @@ export function getPermutationLines(
 
 function getColumnName(col: ColumnType): string {
   return `${col.column_type.toLowerCase()}-${col.index}`;
+}
+
+export function formularize(exp: string): string {
+  // f_0 -> f<sub>0</sub>
+  return exp.replace(/_(\d+)/g, '<sub>$1</sub>');
 }

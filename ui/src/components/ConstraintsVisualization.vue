@@ -129,7 +129,7 @@
             :props="props"
             :class="'bg-' + getColorByColName(props.col.name)"
           >
-            {{ props.col.label }}
+            <span v-html="props.col.label"></span>
           </q-th>
         </template>
       </q-table>
@@ -152,6 +152,7 @@ import {
   LookupLiteralExpression,
   RowsAndRegionsResponse,
   ColumnType,
+  formularize,
 } from 'src/services/ConstraintSystem';
 import { registerGateLanguage } from 'src/services/GateLanguage';
 import hljs from 'highlight.js';
@@ -377,16 +378,16 @@ function loadData(data?: MockProverData) {
     gates.value = rr.gates;
     lookups.value = rr.lookups.map((l) => ({
       input_expressions: l.input_expressions.map(
-        (_) => hljs.highlight(_, { language: 'gate' }).value
+        (_) => formularize(hljs.highlight(_, { language: 'gate' }).value)
       ),
       table_expressions: l.table_expressions.map(
-        (_) => hljs.highlight(_, { language: 'gate' }).value
+        (_) => formularize(hljs.highlight(_, { language: 'gate' }).value)
       ),
     }));
     Object.keys(gates.value).forEach(function (key) {
       gates.value[key] = gates.value[key].map((g) => ({
         name: g.name,
-        literal: hljs.highlight(g.literal, { language: 'gate' }).value,
+        literal: formularize(hljs.highlight(g.literal, { language: 'gate' }).value),
         idx: g.idx,
       }));
     });
