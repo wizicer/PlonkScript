@@ -286,7 +286,10 @@ function getCellId(colName: string, rowIndex: number): string {
 function highlightRelatedCells(colName: string, rowIndex: number) {
   const cellId = getCellId(colName, rowIndex);
   const relatedCells = permutationMap.value[cellId] || [];
-  highlightedCells.value = [cellId, ...relatedCells];
+
+  if (relatedCells.length > 0) {
+    highlightedCells.value = [cellId, ...relatedCells];
+  }
 }
 
 function clearHighlightedCells() {
