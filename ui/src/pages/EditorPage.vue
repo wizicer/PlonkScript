@@ -130,7 +130,10 @@ setTimeout(() => {
 
       run: function (ed) {
         const code = ed.getValue();
-        const result = try_run({ code });
+        const result = try_run({ 
+          code, 
+          modules: {} 
+        });
         vis.value = convertMockProverOutputToObject(result);
       },
     });

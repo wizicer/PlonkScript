@@ -6,6 +6,8 @@ use std::panic;
 #[derive(Serialize, Deserialize)]
 pub struct TryRunRequest {
     pub code: String,
+    #[serde(default)]
+    pub modules: std::collections::HashMap<String, String>,
 }
 
 #[allow(dead_code)]
@@ -37,7 +39,8 @@ fn main() {
     pub fn try_run(request: JsValue) -> Result<JsValue, JsValue> {
         let req: TryRunRequest = serde_wasm_bindgen::from_value(request)?;
         // log(&format!("try_run!"));
-        match transpiler::try_run(req.code) {
+        
+        match transpiler::try_run(req.code, req.modules) {
             Ok(d) => Ok(JsValue::from_str(d.as_str())),
             Err(d) => Err(JsValue::from_str(d.to_string().as_str())),
         }

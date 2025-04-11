@@ -5,7 +5,7 @@ use rhai::{Engine, EvalAltResult};
 use system::{cell_expression::ToField, SimplifiedConstraitSystem};
 use transpiler::transpile;
 
-use crate::engine::EngineExt;
+use crate::engine::PlonkScriptEngine;
 use once_cell::sync::Lazy;
 
 pub mod circuit;
@@ -27,7 +27,7 @@ static mut CONTEXT: SimplifiedConstraitSystem = SimplifiedConstraitSystem {
     instance_count: 0,
 };
 
-pub fn try_run(code: String) -> Result<String, Box<EvalAltResult>> {
+pub fn try_run(code: String, modules: HashMap<String, String>) -> Result<String, Box<EvalAltResult>> {
     unsafe {
         CONTEXT = SimplifiedConstraitSystem {
             // ..Default::default()
@@ -45,7 +45,7 @@ pub fn try_run(code: String) -> Result<String, Box<EvalAltResult>> {
 
     let mut engine = Engine::new();
 
-    engine.register_plonk_script();
+    engine.register_plonk_script(modules);
 
     let script = transpile(code);
     if cfg!(debug_assertions) {

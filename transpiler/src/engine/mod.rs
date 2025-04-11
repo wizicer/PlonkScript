@@ -1,4 +1,6 @@
 use crate::{system::*, CONTEXT};
+use std::collections::HashMap;
+use std::path::PathBuf;
 
 pub mod bind;
 pub mod custom_type;
@@ -13,13 +15,13 @@ use self::{
 };
 pub use io::DEFAULT_INSTANCE_COLUMN_NAME;
 
-pub trait EngineExt {
-    fn register_plonk_script(&mut self);
+pub trait PlonkScriptEngine {
+    fn register_plonk_script(&mut self, modules: HashMap<String, String>);
 }
 
-impl EngineExt for rhai::Engine {
+impl PlonkScriptEngine for rhai::Engine {
     #[warn(unused_must_use)]
-    fn register_plonk_script(&mut self) {
+    fn register_plonk_script(&mut self, modules: HashMap<String, String>) {
         // when expression is complex, may occur ExprTooDeep error
         self.set_max_expr_depths(320, 320);
 
@@ -32,7 +34,7 @@ impl EngineExt for rhai::Engine {
         register_custom_type(self);
         register_operator(self);
 
-        register_module_resolver(self);
+        register_module_resolver(self, modules);
 
         define_region("default".to_string());
     }
