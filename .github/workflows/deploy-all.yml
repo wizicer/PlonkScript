@@ -24,7 +24,7 @@ jobs:
           workflow: build-docs.yml
 
       - uses: actions/configure-pages@v4
-      - uses: actions/upload-pages-artifact@v4
+      - uses: actions/upload-pages-artifact@v3
         with:
           path: .
 
