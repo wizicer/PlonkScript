@@ -1,5 +1,4 @@
 use std::fs;
-use std::path::PathBuf;
 use std::collections::HashMap;
 
 use rhai::EvalAltResult;
