@@ -10,6 +10,13 @@ pub struct TryRunRequest {
     pub modules: std::collections::HashMap<String, String>,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct TryRunResult {
+    pub prover_result: String,
+    pub transpiled_script: String,
+    pub context_debug: String,
+}
+
 #[allow(dead_code)]
 fn main() {
     use wasm_bindgen::prelude::*;
@@ -41,7 +48,11 @@ fn main() {
         // log(&format!("try_run!"));
         
         match transpiler::try_run(req.code, req.modules) {
-            Ok(d) => Ok(JsValue::from_str(d.as_str())),
+            Ok(result) => Ok(serde_wasm_bindgen::to_value(&TryRunResult {
+                prover_result: result.prover_result,
+                transpiled_script: result.transpiled_script,
+                context_debug: result.context_debug,
+            }).unwrap()),
             Err(d) => Err(JsValue::from_str(d.to_string().as_str())),
         }
     }

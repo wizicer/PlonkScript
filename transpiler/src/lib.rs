@@ -27,7 +27,13 @@ static mut CONTEXT: SimplifiedConstraitSystem = SimplifiedConstraitSystem {
     instance_count: 0,
 };
 
-pub fn try_run(code: String, modules: HashMap<String, String>) -> Result<String, Box<EvalAltResult>> {
+pub struct TryRunResult {
+    pub prover_result: String,
+    pub transpiled_script: String,
+    pub context_debug: String,
+}
+
+pub fn try_run(code: String, modules: HashMap<String, String>) -> Result<TryRunResult, Box<EvalAltResult>> {
     unsafe {
         CONTEXT = SimplifiedConstraitSystem {
             // ..Default::default()
@@ -47,22 +53,21 @@ pub fn try_run(code: String, modules: HashMap<String, String>) -> Result<String,
 
     engine.register_plonk_script(modules);
 
-    let script = transpile(code);
+    let transpiled_script = transpile(code);
     if cfg!(debug_assertions) {
         let mut file = std::fs::File::create("debug.rhai").unwrap();
-        std::io::Write::write_all(&mut file, script.as_bytes()).unwrap();
+        std::io::Write::write_all(&mut file, transpiled_script.as_bytes()).unwrap();
     }
 
-    // println!("{}", script);
-    if let Err(error) = engine.run(script.as_str()) {
+    if let Err(error) = engine.run(transpiled_script.as_str()) {
         println!("Script Error: {:#?}", error);
         return Err(error);
     }
 
+    let context_debug = unsafe { format!("{:#?}", CONTEXT) };
     if cfg!(debug_assertions) {
-        let d = unsafe { format!("{:#?}", CONTEXT) };
         let mut file = std::fs::File::create("context.rust").unwrap();
-        std::io::Write::write_all(&mut file, d.as_bytes()).unwrap();
+        std::io::Write::write_all(&mut file, context_debug.as_bytes()).unwrap();
     }
 
     if cfg!(debug_assertions) && false {
@@ -88,7 +93,11 @@ pub fn try_run(code: String, modules: HashMap<String, String>) -> Result<String,
 
     let ret = run_prover(k, public_input);
 
-    ret.map_err(|e| {
+    ret.map(|prover_result| TryRunResult {
+        prover_result,
+        transpiled_script,
+        context_debug,
+    }).map_err(|e| {
         Box::new(EvalAltResult::ErrorSystem(
             "Prove failed".to_string(),
             Box::new(e),

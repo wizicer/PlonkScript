@@ -38,6 +38,12 @@ export type PolynomialExpression =
 
 export type CellValue = string[] | string;
 
+export interface TryRunResult {
+  prover_result: string;
+  transpiled_script: string;
+  context_debug: string;
+}
+
 export interface MockProverData {
   type: string;
   start?: string;

@@ -79,7 +79,7 @@ import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
 import { language, theme } from 'src/services/PlonkScriptLanguage';
 import init, { try_run } from '../transpiler';
 import { convertMockProverOutputToObject } from 'src/services/MockProverTranslator';
-import { MockProverData } from 'src/services/ConstraintSystem';
+import { MockProverData, TryRunResult } from 'src/services/ConstraintSystem';
 import ConstraintsVisualization from '../components/ConstraintsVisualization.vue';
 
 self.MonacoEnvironment = {
@@ -139,6 +139,9 @@ out <== last_c;
 const splitPercent = ref(50);
 const activeTab = ref('main');
 const editorContainer = ref<HTMLElement | null>(null);
+const vis: Ref<MockProverData | undefined> = ref(undefined);
+const tryRunResult = ref<TryRunResult | undefined>(undefined);
+let editor: monaco.editor.IStandaloneCodeEditor | null = null;
 
 interface FileData {
   id: string;
@@ -154,9 +157,6 @@ const files = ref<FileData[]>([
 const activeFile = computed(() => {
   return files.value.find((f) => f.id === activeTab.value);
 });
-
-let editor: monaco.editor.IStandaloneCodeEditor | null = null;
-const vis: Ref<MockProverData | undefined> = ref(undefined);
 
 let nextId = 1;
 function generateId() {
@@ -247,7 +247,10 @@ function runCode() {
       modules: modules,
     });
 
-    vis.value = convertMockProverOutputToObject(result);
+    tryRunResult.value = result as TryRunResult;
+    const resultJson = tryRunResult.value.prover_result;
+
+    vis.value = convertMockProverOutputToObject(resultJson);
   } catch (error) {
     console.error('Error running code:', error);
   }
