@@ -1,0 +1,19 @@
+# k: 4
+# a: 10
+# b: 2
+
+pub input a;
+pub input b;
+pub output o2;
+
+col advice h;
+
+h[0] <== a;
+h[1] <== b;
+let a = h[0];
+let b = h[1];
+
+h[2] <-- a / b;
+a <== b * h[2];
+h[3] <== a + b;
+o2 <== h[3];

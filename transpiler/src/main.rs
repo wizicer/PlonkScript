@@ -6,7 +6,7 @@ use transpiler::try_run;
 
 fn resolve_lib_modules() -> HashMap<String, String> {
     let current_dir = std::env::current_dir().unwrap();
-    let dir_name = "plonk_lib";
+    let dir_name = "plonk/lib";
     let lib_dir = current_dir.join(dir_name);
 
     if !lib_dir.exists() {
@@ -30,7 +30,7 @@ fn resolve_lib_modules() -> HashMap<String, String> {
 #[allow(unreachable_code)]
 pub fn main() -> Result<(), Box<EvalAltResult>> {
     let modules = resolve_lib_modules();
-    let code = fs::read_to_string("table_simple.plonk").expect("read file failed");
+    let code = fs::read_to_string("plonk/src/simple_demo.plonk").expect("read file failed");
     let output = try_run(code, modules);
     match output {
         Ok(_) => {

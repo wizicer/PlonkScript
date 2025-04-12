@@ -1,0 +1,46 @@
+# k: 4
+
+region mul(a, b, c, m) {
+    a[0] <-- 3;
+    b[0] <-- 3;
+    c[0] <== a[0] * b[0];
+
+    a[1] <-- 3;
+    b[1] <-- 7;
+    c[1] <== a[1] * b[1];
+
+    a[2] <== c[1];
+
+    m[2] <-- 3;
+    c[2] <== m[2] * a[2];
+
+    c[2]
+}
+
+region add(a, b, c, i, m) {
+    a[0] <-- 9;
+    b[0] <== i;
+    c[0] <== a[0] + b[0];
+
+    a[1] <== c[0];
+    b[1] <-- 7;
+    c[1] <== a[1] + b[1];
+
+    m[2] <-- 5;
+    a[2] <== c[1];
+    c[2] <== a[2] + m[2];
+
+    c[2]
+}
+
+pub output out;
+
+col advice a;
+col advice b;
+col advice c;
+
+col fixed m;
+
+let result = mul(a, b, c, m);
+let result = add(a, b, c, result, m);
+out <== result;
