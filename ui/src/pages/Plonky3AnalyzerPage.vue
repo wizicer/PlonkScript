@@ -42,7 +42,7 @@
         <q-card-section>
           inject your code like this to get the trace for analysis:
           <pre>
-plonky3_summarizer = { path = "/Users/oker/2-Project/00-zkptech/plonkscript/plonky3_summarizer/" }
+plonky3_summarizer = { path = "/Users/icer/plonkscript/plonky3_summarizer/" }
 
 plonky3_summarizer::save_as_json::&lt;BabyBear, _&gt;(&chip, &trace, &vec![], "a.json");
 </pre
