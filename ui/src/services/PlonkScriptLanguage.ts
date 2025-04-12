@@ -100,8 +100,8 @@ export const language = <languages.IMonarchLanguage>{
     'virtual',
     'yield',
 
-    'public',
-    'private',
+    'pub',
+    'col',
     'gate',
     'region',
   ],

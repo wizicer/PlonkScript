@@ -1,750 +1,652 @@
-# todo: struct fields are getting source.plonkscript (see rust2.rs lines 1885 and 1888 with self.slice_head)
-# you can capture this because function and method calls will always have parens, even if they are chained to another function by a dot, so you can match the case where a dot is followed by lowercase and then a word boundary without parens
 $schema: https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json
 name: Plonk Script
 fileTypes:
-  - plonk
-  - ps
-  - plo
+      - plonk
+      - ps
+      - plo
 scopeName: source.plonkscript
 patterns:
-  -
-    comment: boxed slice literal
-    begin: (<)(\[)
-    beginCaptures:
-      1:
-        name: punctuation.brackets.angle.plonkscript
-      2:
-        name: punctuation.brackets.square.plonkscript
-    end: '>'
-    endCaptures:
-      0:
-        name: punctuation.brackets.angle.plonkscript
-    patterns:
-      - include: '#block-comments'
-      - include: '#comments'
-      - include: '#gtypes'
-      - include: '#lvariables'
-      - include: '#lifetimes'
-      - include: '#punctuation'
-      - include: '#types'
-  -
-    comment: macro type metavariables
-    name: meta.macro.metavariable.type.plonkscript
-    match: (\$)((crate)|([A-Z][A-Za-z0-9_]*))((:)(block|expr|ident|item|lifetime|literal|meta|path?|stmt|tt|ty|vis))?
-    captures:
-      1:
-        name: keyword.operator.macro.dollar.plonkscript
-      3:
-        name: keyword.other.crate.plonkscript
-      4:
-        name: entity.name.type.metavariable.plonkscript
-      6:
-        name: keyword.operator.key-value.plonkscript
-      7:
-        name: variable.other.metavariable.specifier.plonkscript
-    patterns:
-      - include: '#keywords'
-  -
-    comment: macro metavariables
-    name: meta.macro.metavariable.plonkscript
-    match: (\$)([a-z][A-Za-z0-9_]*)((:)(block|expr|ident|item|lifetime|literal|meta|path?|stmt|tt|ty|vis))?
-    captures:
-      1:
-        name: keyword.operator.macro.dollar.plonkscript
-      2:
-        name: variable.other.metavariable.name.plonkscript
-      4:
-        name: keyword.operator.key-value.plonkscript
-      5:
-        name: variable.other.metavariable.specifier.plonkscript
-    patterns:
-      - include: '#keywords'
-  -
-    comment: macro rules
-    name: meta.macro.rules.plonkscript
-    match: \b(macro_rules!)\s+(([a-z0-9_]+)|([A-Z][a-z0-9_]*))\s+(\{)
-    captures:
-      1:
-        name: entity.name.function.macro.rules.plonkscript
-      3:
-        name: entity.name.function.macro.plonkscript
-      4:
-        name: entity.name.type.macro.plonkscript
-      5:
-        name: punctuation.brackets.curly.plonkscript
-  -
-    comment: attributes
-    name: meta.attribute.plonkscript
-    begin: '(#)(\!?)(\[)'
-    beginCaptures:
-      1:
-        name: punctuation.definition.attribute.plonkscript
-      2:
-        name: keyword.operator.attribute.inner.plonkscript
-      3:
-        name: punctuation.brackets.attribute.plonkscript
-    end: '\]'
-    endCaptures:
-      0:
-        name: punctuation.brackets.attribute.plonkscript
-    patterns:
-      - include: '#block-comments'
-      - include: '#comments'
-      - include: '#keywords'
-      - include: '#lifetimes'
-      - include: '#punctuation'
-      - include: '#strings'
-      - include: '#gtypes'
-      - include: '#types'
-  -
-    comment: modules
-    match: (mod)\s+((?:r#(?!crate|[Ss]elf|super))?[a-z][A-Za-z0-9_]*)
-    captures:
-      1:
-        name: storage.type.plonkscript
-      2:
-        name: entity.name.module.plonkscript
-  -
-    comment: external crate imports
-    name: meta.import.plonkscript
-    begin: \b(extern)\s+(crate)
-    beginCaptures:
-      1:
-        name: storage.type.plonkscript
-      2:
-        name: keyword.other.crate.plonkscript
-    end: ;
-    endCaptures:
-      0:
-        name: punctuation.semi.plonkscript
-    patterns:
-      - include: '#block-comments'
-      - include: '#comments'
-      - include: '#keywords'
-      - include: '#punctuation'
-  -
-    comment: use statements
-    name: meta.use.plonkscript
-    begin: \b(use)\s
-    beginCaptures:
-      1:
-        name: keyword.other.plonkscript
-    end: ;
-    endCaptures:
-      0:
-        name: punctuation.semi.plonkscript
-    patterns:
-      - include: '#block-comments'
-      - include: '#comments'
-      - include: '#keywords'
-      - include: '#namespaces'
-      - include: '#punctuation'
-      - include: '#types'
-      - include: '#lvariables'
-  - include: '#block-comments'
-  - include: '#comments'
-  - include: '#lvariables'
-  - include: '#constants'
-  - include: '#gtypes'
-  - include: '#functions'
-  - include: '#types'
-  - include: '#keywords'
-  - include: '#lifetimes'
-  - include: '#macros'
-  - include: '#namespaces'
-  - include: '#punctuation'
-  - include: '#strings'
-  - include: '#variables'
+      - comment: boxed slice literal
+        begin: (<)(\[)
+        beginCaptures:
+              "1":
+                    name: punctuation.brackets.angle.plonkscript
+              "2":
+                    name: punctuation.brackets.square.plonkscript
+        end: ">"
+        endCaptures:
+              "0":
+                    name: punctuation.brackets.angle.plonkscript
+        patterns:
+              - include: "#block-comments"
+              - include: "#comments"
+              - include: "#gtypes"
+              - include: "#lvariables"
+              - include: "#lifetimes"
+              - include: "#punctuation"
+              - include: "#types"
+      - comment: macro type metavariables
+        name: meta.macro.metavariable.type.plonkscript
+        match: (\$)((crate)|([A-Z][A-Za-z0-9_]*))((:)(block|expr|ident|item|lifetime|literal|meta|path?|stmt|tt|ty|vis))?
+        captures:
+              "1":
+                    name: keyword.operator.macro.dollar.plonkscript
+              "3":
+                    name: keyword.other.crate.plonkscript
+              "4":
+                    name: entity.name.type.metavariable.plonkscript
+              "6":
+                    name: keyword.operator.key-value.plonkscript
+              "7":
+                    name: variable.other.metavariable.specifier.plonkscript
+        patterns:
+              - include: "#keywords"
+      - comment: macro metavariables
+        name: meta.macro.metavariable.plonkscript
+        match: (\$)([a-z][A-Za-z0-9_]*)((:)(block|expr|ident|item|lifetime|literal|meta|path?|stmt|tt|ty|vis))?
+        captures:
+              "1":
+                    name: keyword.operator.macro.dollar.plonkscript
+              "2":
+                    name: variable.other.metavariable.name.plonkscript
+              "4":
+                    name: keyword.operator.key-value.plonkscript
+              "5":
+                    name: variable.other.metavariable.specifier.plonkscript
+        patterns:
+              - include: "#keywords"
+      - comment: macro rules
+        name: meta.macro.rules.plonkscript
+        match: \b(macro_rules!)\s+(([a-z0-9_]+)|([A-Z][a-z0-9_]*))\s+(\{)
+        captures:
+              "1":
+                    name: entity.name.function.macro.rules.plonkscript
+              "3":
+                    name: entity.name.function.macro.plonkscript
+              "4":
+                    name: entity.name.type.macro.plonkscript
+              "5":
+                    name: punctuation.brackets.curly.plonkscript
+      - comment: attributes
+        name: meta.attribute.plonkscript
+        begin: (#)(\!?)(\[)
+        beginCaptures:
+              "1":
+                    name: punctuation.definition.attribute.plonkscript
+              "2":
+                    name: keyword.operator.attribute.inner.plonkscript
+              "3":
+                    name: punctuation.brackets.attribute.plonkscript
+        end: \]
+        endCaptures:
+              "0":
+                    name: punctuation.brackets.attribute.plonkscript
+        patterns:
+              - include: "#block-comments"
+              - include: "#comments"
+              - include: "#keywords"
+              - include: "#lifetimes"
+              - include: "#punctuation"
+              - include: "#strings"
+              - include: "#gtypes"
+              - include: "#types"
+      - comment: modules
+        match: (mod)\s+((?:r#(?!crate|[Ss]elf|super))?[a-z][A-Za-z0-9_]*)
+        captures:
+              "1":
+                    name: storage.type.plonkscript
+              "2":
+                    name: entity.name.module.plonkscript
+      - comment: external crate imports
+        name: meta.import.plonkscript
+        begin: \b(extern)\s+(crate)
+        beginCaptures:
+              "1":
+                    name: storage.type.plonkscript
+              "2":
+                    name: keyword.other.crate.plonkscript
+        end: ;
+        endCaptures:
+              "0":
+                    name: punctuation.semi.plonkscript
+        patterns:
+              - include: "#block-comments"
+              - include: "#comments"
+              - include: "#keywords"
+              - include: "#punctuation"
+      - comment: use statements
+        name: meta.use.plonkscript
+        begin: \b(use)\s
+        beginCaptures:
+              "1":
+                    name: keyword.other.plonkscript
+        end: ;
+        endCaptures:
+              "0":
+                    name: punctuation.semi.plonkscript
+        patterns:
+              - include: "#block-comments"
+              - include: "#comments"
+              - include: "#keywords"
+              - include: "#namespaces"
+              - include: "#punctuation"
+              - include: "#types"
+              - include: "#lvariables"
+      - include: "#block-comments"
+      - include: "#comments"
+      - include: "#lvariables"
+      - include: "#constants"
+      - include: "#gtypes"
+      - include: "#functions"
+      - include: "#types"
+      - include: "#keywords"
+      - include: "#lifetimes"
+      - include: "#macros"
+      - include: "#namespaces"
+      - include: "#punctuation"
+      - include: "#strings"
+      - include: "#variables"
 repository:
-  comments:
-    patterns:
-      -
-        comment: documentation comments
-        name: comment.line.documentation.plonkscript
-        match: ^\s*///.*
-      -
-        comment: line comments
-        name: comment.line.double-slash.plonkscript
-        match: \s*//.*
-  block-comments:
-    patterns:
-      -
-        comment: empty block comments
-        name: comment.block.plonkscript
-        match: /\*\*/
-      -
-        comment: block documentation comments
-        name: comment.block.documentation.plonkscript
-        begin: /\*\*
-        end: \*/
-        patterns:
-          - include: '#block-comments'
-      -
-        comment: block comments
-        name: comment.block.plonkscript
-        begin: /\*(?!\*)
-        end: \*/
-        patterns:
-          - include: '#block-comments'
-  constants:
-    patterns:
-      -
-        comment: ALL CAPS constants
-        name: constant.other.caps.plonkscript
-        match: \b[A-Z]{2}[A-Z0-9_]*\b
-      -
-        comment: constant declarations
-        match: \b(const)\s+([A-Z][A-Za-z0-9_]*)\b
-        captures:
-          1:
-            name: storage.type.plonkscript
-          2:
-            name: constant.other.caps.plonkscript
-      -
-        comment: decimal integers and floats
-        name: constant.numeric.decimal.plonkscript
-        match: \b\d[\d_]*(\.?)[\d_]*(?:(E|e)([+-]?)([\d_]+))?(f32|f64|i128|i16|i32|i64|i8|isize|u128|u16|u32|u64|u8|usize)?\b
-        captures:
-          1:
-            name: punctuation.separator.dot.decimal.plonkscript
-          2:
-            name: keyword.operator.exponent.plonkscript
-          3:
-            name: keyword.operator.exponent.sign.plonkscript
-          4:
-            name: constant.numeric.decimal.exponent.mantissa.plonkscript
-          5:
-            name: entity.name.type.numeric.plonkscript
-      -
-        comment: hexadecimal integers
-        name: constant.numeric.hex.plonkscript
-        match: \b0x[\da-fA-F_]+(i128|i16|i32|i64|i8|isize|u128|u16|u32|u64|u8|usize)?\b
-        captures:
-          1:
-            name: entity.name.type.numeric.plonkscript
-      -
-        comment: octal integers
-        name: constant.numeric.oct.plonkscript
-        match: \b0o[0-7_]+(i128|i16|i32|i64|i8|isize|u128|u16|u32|u64|u8|usize)?\b
-        captures:
-          1:
-            name: entity.name.type.numeric.plonkscript
-      -
-        comment: binary integers
-        name: constant.numeric.bin.plonkscript
-        match: \b0b[01_]+(i128|i16|i32|i64|i8|isize|u128|u16|u32|u64|u8|usize)?\b
-        captures:
-          1:
-            name: entity.name.type.numeric.plonkscript
-      -
-        comment: booleans
-        name: constant.language.bool.plonkscript
-        match: \b(true|false)\b
-  escapes:
-    comment: 'escapes: ASCII, byte, Unicode, quote, regex'
-    name: constant.character.escape.plonkscript
-    match: (\\)(?:(?:(x[0-7][0-7a-fA-F])|(u(\{)[\da-fA-F]{4,6}(\}))|.))
-    captures:
-      1:
-        name: constant.character.escape.backslash.plonkscript
-      2:
-        name: constant.character.escape.bit.plonkscript
-      3:
-        name: constant.character.escape.unicode.plonkscript
-      4:
-        name: constant.character.escape.unicode.punctuation.plonkscript
-      5:
-        name: constant.character.escape.unicode.punctuation.plonkscript
-  functions:
-    patterns:
-      -
-        comment: pub as a function
-        match: \b(pub)(\()
-        captures:
-          1:
-            name: keyword.other.plonkscript
-          2:
-            name: punctuation.brackets.round.plonkscript
-      -
-        comment: function definition
-        name: meta.function.definition.plonkscript
-        begin: \b(fn)\s+((?:r#(?!crate|[Ss]elf|super))?[A-Za-z0-9_]+)((\()|(<))
-        beginCaptures:
-          1:
-            name: keyword.other.fn.plonkscript
-          2:
-            name: entity.name.function.plonkscript
-          4:
-            name: punctuation.brackets.round.plonkscript
-          5:
-            name: punctuation.brackets.angle.plonkscript
-        end: \{|;
-        endCaptures:
-          0:
-            name: punctuation.brackets.curly.plonkscript
-        patterns:
-          - include: '#block-comments'
-          - include: '#comments'
-          - include: '#keywords'
-          - include: '#lvariables'
-          - include: '#constants'
-          - include: '#gtypes'
-          - include: '#functions'
-          - include: '#lifetimes'
-          - include: '#macros'
-          - include: '#namespaces'
-          - include: '#punctuation'
-          - include: '#strings'
-          - include: '#types'
-          - include: '#variables'
-      -
-        # todo: capitalized functions in most cases represent enum members or tuple structs
-        # separate these out and color them accordingly
-        # this has to be done without breaking struct scoping when the struct keyword is used:
-        # struct MyStruct()
-        # this currently highlights correctly, even with parens
-        comment: function/method calls, chaining
-        name: meta.function.call.plonkscript
-        begin: ((?:r#(?!crate|[Ss]elf|super))?[A-Za-z0-9_]+)(\()
-        beginCaptures:
-          1:
-            name: entity.name.function.plonkscript
-          2:
-            name: punctuation.brackets.round.plonkscript
-        end: \)
-        endCaptures:
-          0:
-            name: punctuation.brackets.round.plonkscript
-        patterns:
-          - include: '#block-comments'
-          - include: '#comments'
-          - include: '#keywords'
-          - include: '#lvariables'
-          - include: '#constants'
-          - include: '#gtypes'
-          - include: '#functions'
-          - include: '#lifetimes'
-          - include: '#macros'
-          - include: '#namespaces'
-          - include: '#punctuation'
-          - include: '#strings'
-          - include: '#types'
-          - include: '#variables'
-      -
-        comment: function/method calls with turbofish
-        name: meta.function.call.plonkscript
-        begin: ((?:r#(?!crate|[Ss]elf|super))?[A-Za-z0-9_]+)(?=::<.*>\()
-        beginCaptures:
-          1:
-            name: entity.name.function.plonkscript
-        end: \)
-        endCaptures:
-          0:
-            name: punctuation.brackets.round.plonkscript
-        patterns:
-          - include: '#block-comments'
-          - include: '#comments'
-          - include: '#keywords'
-          - include: '#lvariables'
-          - include: '#constants'
-          - include: '#gtypes'
-          - include: '#functions'
-          - include: '#lifetimes'
-          - include: '#macros'
-          - include: '#namespaces'
-          - include: '#punctuation'
-          - include: '#strings'
-          - include: '#types'
-          - include: '#variables'
-  keywords:
-    patterns:
-      -
-        comment: control flow keywords
-        name: keyword.control.plonkscript
-        match: \b(await|break|continue|do|else|for|if|loop|match|return|try|while|yield)\b
-      -
-        comment: storage keywords
-        name: keyword.other.plonkscript storage.type.plonkscript
-        match: \b(extern|let|macro|mod)\b
-      -
-        comment: const keyword
-        name: storage.modifier.plonkscript
-        match: \b(const)\b
-      -
-        comment: type keyword
-        name: keyword.declaration.type.plonkscript storage.type.plonkscript
-        match: \b(type)\b
-      -
-        comment: enum keyword
-        name: keyword.declaration.enum.plonkscript storage.type.plonkscript
-        match: \b(enum)\b
-      -
-        comment: trait keyword
-        name: keyword.declaration.trait.plonkscript storage.type.plonkscript
-        match: \b(trait)\b
-      -
-        comment: struct keyword
-        name: keyword.declaration.struct.plonkscript storage.type.plonkscript
-        match: \b(struct)\b
-      -
-        comment: storage modifiers
-        name: storage.modifier.plonkscript
-        match: \b(abstract|static)\b
-      -
-        comment: other keywords
-        name: keyword.other.plonkscript
-        match: \b(as|async|become|box|dyn|move|final|impl|in|override|priv|pub|ref|typeof|union|unsafe|unsized|use|virtual|where)\b
-      -
-        comment: fn
-        name: keyword.other.fn.plonkscript
-        match: \bfn\b
-      -
-        comment: crate
-        name: keyword.other.crate.plonkscript
-        match: \bcrate\b
-      -
-        comment: mut
-        name: storage.modifier.mut.plonkscript
-        match: \bmut\b
-      -
-        comment: logical operators
-        name: keyword.operator.logical.plonkscript
-        match: (\^|\||\|\||&&|<<|>>|!)(?!=)
-      -
-        comment: logical AND, borrow references
-        name: keyword.operator.borrow.and.plonkscript
-        match: '&(?![&=])'
-      -
-        comment: assignment operators
-        name: keyword.operator.assignment.plonkscript
-        match: (\+=|-=|\*=|/=|%=|\^=|&=|\|=|<<=|>>=)
-      -
-        comment: single equal
-        name: keyword.operator.assignment.equal.plonkscript
-        match: '(?<![<>])=(?!=|>)'
-      -
-        comment: comparison operators
-        name: keyword.operator.comparison.plonkscript
-        match: (=(=)?(?!>)|!=|<=|(?<!=)>=)
-      -
-        comment: math operators
-        name: keyword.operator.math.plonkscript
-        match: '(([+%]|(\*(?!\w)))(?!=))|(-(?!>))|(/(?!/))'
-      -
-        comment: less than, greater than (special case)
-        match: (?:\b|(?:(\))|(\])|(\})))[ \t]+([<>])[ \t]+(?:\b|(?:(\()|(\[)|(\{)))
-        captures:
-          1:
-            name: punctuation.brackets.round.plonkscript
-          2:
-            name: punctuation.brackets.square.plonkscript
-          3:
-            name: punctuation.brackets.curly.plonkscript
-          4:
-            name: keyword.operator.comparison.plonkscript
-          5:
-            name: punctuation.brackets.round.plonkscript
-          6:
-            name: punctuation.brackets.square.plonkscript
-          7:
-            name: punctuation.brackets.curly.plonkscript
-      -
-        comment: namespace operator
-        name: keyword.operator.namespace.plonkscript
-        match: '::'
-      -
-        comment: dereference asterisk
-        match: (\*)(?=\w+)
-        captures:
-          1:
-            name: keyword.operator.dereference.plonkscript
-      -
-        comment: subpattern binding
-        name: keyword.operator.subpattern.plonkscript
-        match: '@'
-      -
-        comment: dot access
-        name: keyword.operator.access.dot.plonkscript
-        match: \.(?!\.)
-      -
-        comment: ranges, range patterns
-        name: keyword.operator.range.plonkscript
-        match: \.{2}(=|\.)?
-      -
-        comment: colon
-        name: keyword.operator.key-value.plonkscript
-        match: ':(?!:)'
-      -
-        comment: dashrocket, skinny arrow
-        name: keyword.operator.arrow.skinny.plonkscript
-        match: ->
-      -
-        comment: hashrocket, fat arrow
-        name: keyword.operator.arrow.fat.plonkscript
-        match: =>
-      -
-        comment: dollar macros
-        name: keyword.operator.macro.dollar.plonkscript
-        match: \$
-      -
-        comment: question mark operator, questionably sized, macro kleene matcher
-        name: keyword.operator.question.plonkscript
-        match: \?
-      -
-        comment: assign and constraint
-        name: keyword.operator.arrow.aac.plonkscript
-        match: <==
-      -
-        comment: constraint
-        name: keyword.operator.arrow.constraint.plonkscript
-        match: ===
-      -
-        comment: assign
-        name: keyword.operator.arrow.assign.plonkscript
-        match: <--
-      -
-        comment: gate_assign
-        name: keyword.operator.arrow.gate_assign.plonkscript
-        match: <\|
-      -
-        comment: column modifier
-        name: keyword.modifier.plonkscript
-        match: \b(public|private)\b
-      -
-        comment: column type
-        name: keyword.type.plonkscript
-        match: \b(input|output|advice|selector|fixed|instance)\b
-      -
-        comment: gate
-        name: keyword.gate.plonkscript
-        match: \b(gate)\b
-      -
-        comment: region
-        name: keyword.region.plonkscript
-        match: \b(region)\b
-  interpolations:
-    comment: curly brace interpolations
-    name: meta.interpolation.plonkscript
-    match: '({)[^"{}]*(})'
-    captures:
-      1:
-        name: punctuation.definition.interpolation.plonkscript
-      2:
-        name: punctuation.definition.interpolation.plonkscript
-  lifetimes:
-    patterns:
-      -
-        comment: named lifetime parameters
-        match: (['])([a-zA-Z_][0-9a-zA-Z_]*)(?!['])\b
-        captures:
-          1:
-            name: punctuation.definition.lifetime.plonkscript
-          2:
-            name: entity.name.type.lifetime.plonkscript
-      -
-        comment: borrowing references to named lifetimes
-        match: (\&)(['])([a-zA-Z_][0-9a-zA-Z_]*)(?!['])\b
-        captures:
-          1:
-            name: keyword.operator.borrow.plonkscript
-          2:
-            name: punctuation.definition.lifetime.plonkscript
-          3:
-            name: entity.name.type.lifetime.plonkscript
-  macros:
-    patterns:
-      -
-        comment: macros
-        name: meta.macro.plonkscript
-        match: (([a-z_][A-Za-z0-9_]*!)|([A-Z_][A-Za-z0-9_]*!))
-        captures:
-          2:
-            name: entity.name.function.macro.plonkscript
-          3:
-            name: entity.name.type.macro.plonkscript
-  namespaces:
-    patterns:
-      -
-        comment: namespace (non-type, non-function path segment)
-        match: (?<![A-Za-z0-9_])([A-Za-z0-9_]+)((?<!super|self)::)
-        captures:
-          1:
-            name: entity.name.namespace.plonkscript
-          2:
-            name: keyword.operator.namespace.plonkscript
-  types:
-    patterns:
-      -
-        comment: numeric types
-        match: '(?<![A-Za-z])(f32|f64|i128|i16|i32|i64|i8|isize|u128|u16|u32|u64|u8|usize)\b'
-        captures:
-          1:
-            name: entity.name.type.numeric.plonkscript
-      -
-        comment: parameterized types
-        begin: \b([A-Z][A-Za-z0-9]*)(<)
-        beginCaptures:
-          1:
-            name: entity.name.type.plonkscript
-          2:
-            name: punctuation.brackets.angle.plonkscript
-        end: '>'
-        endCaptures:
-          0:
-            name: punctuation.brackets.angle.plonkscript
-        patterns:
-          - include: '#block-comments'
-          - include: '#comments'
-          - include: '#keywords'
-          - include: '#lvariables'
-          - include: '#lifetimes'
-          - include: '#punctuation'
-          - include: '#types'
-          - include: '#variables'
-      -
-        comment: primitive types
-        name: entity.name.type.primitive.plonkscript
-        match: \b(bool|char|str)\b
-      -
-        comment: trait declarations
-        match: \b(trait)\s+([A-Z][A-Za-z0-9]*)\b
-        captures:
-          1:
-            name: keyword.declaration.trait.plonkscript storage.type.plonkscript
-          2:
-            name: entity.name.type.trait.plonkscript
-      # todo: add a specific case for struct fields so they can have different scope than variables - make sure not to catch namespaces
-      -
-        comment: struct declarations
-        match: \b(struct)\s+([A-Z][A-Za-z0-9]*)\b
-        captures:
-          1:
-            name: keyword.declaration.struct.plonkscript storage.type.plonkscript
-          2:
-            name: entity.name.type.struct.plonkscript
-      -
-        comment: enum declarations
-        match: \b(enum)\s+([A-Z][A-Za-z0-9_]*)\b
-        captures:
-          1:
-            name: keyword.declaration.enum.plonkscript storage.type.plonkscript
-          2:
-            name: entity.name.type.enum.plonkscript
-      -
-        comment: type declarations
-        match: \b(type)\s+([A-Z][A-Za-z0-9_]*)\b
-        captures:
-          1:
-            name: keyword.declaration.type.plonkscript storage.type.plonkscript
-          2:
-            name: entity.name.type.declaration.plonkscript
-      -
-        comment: types
-        name: entity.name.type.plonkscript
-        match: '\b[A-Z][A-Za-z0-9]*\b(?!!)'
-  gtypes:
-    patterns:
-      -
-        comment: option types
-        name: entity.name.type.option.plonkscript
-        match: \b(Some|None)\b
-      -
-        comment: result types
-        name: entity.name.type.result.plonkscript
-        match: \b(Ok|Err)\b
-  punctuation:
-    patterns:
-      -
-        comment: comma
-        name: punctuation.comma.plonkscript
-        match: ','
-      -
-        comment: curly braces
-        name: punctuation.brackets.curly.plonkscript
-        match: '[{}]'
-      -
-        comment: parentheses, round brackets
-        name: punctuation.brackets.round.plonkscript
-        match: '[()]'
-      -
-        comment: semicolon
-        name: punctuation.semi.plonkscript
-        match: ;
-      -
-        comment: square brackets
-        name: punctuation.brackets.square.plonkscript
-        match: '[\[\]]'
-      -
-        comment: angle brackets
-        name: punctuation.brackets.angle.plonkscript
-        match: '(?<!=)[<>]'
-  strings:
-    patterns:
-      -
-        comment: double-quoted strings and byte strings
-        name: string.quoted.double.plonkscript
-        begin: '(b?)(")'
-        beginCaptures:
-          1:
-            name: string.quoted.byte.raw.plonkscript
-          2:
-            name: punctuation.definition.string.plonkscript
-        end: '"'
-        endCaptures:
-          0:
-            name: punctuation.definition.string.plonkscript
-        patterns:
-          - include: '#escapes'
-          - include: '#interpolations'
-      -
-        comment: double-quoted raw strings and raw byte strings
-        name: string.quoted.double.plonkscript
-        begin: '(b?r)(#*)(")'
-        beginCaptures:
-          1:
-            name: string.quoted.byte.raw.plonkscript
-          2:
-            name: punctuation.definition.string.raw.plonkscript
-          3:
-            name: punctuation.definition.string.plonkscript
-        end: '(")(\2)'
-        endCaptures:
-          1:
-            name: punctuation.definition.string.plonkscript
-          2:
-            name: punctuation.definition.string.raw.plonkscript
-      -
-        comment: characters and bytes
-        name: string.quoted.single.char.plonkscript
-        begin: "(b)?(')"
-        beginCaptures:
-          1:
-            name: string.quoted.byte.raw.plonkscript
-          2:
-            name: punctuation.definition.char.plonkscript
-        end: "'"
-        endCaptures:
-          0:
-            name: punctuation.definition.char.plonkscript
-        patterns:
-          - include: '#escapes'
-  lvariables:
-    patterns:
-      -
-        comment: self
-        name: variable.language.self.plonkscript
-        match: \b[Ss]elf\b
-      -
-        comment: super
-        name: variable.language.super.plonkscript
-        match: \bsuper\b
-  variables:
-    patterns:
-      # In order to capture variables ending ranges, but not struct field access, we match a preceding dot, only if it's preceded by at least one other dot.
-      # The double negation states that the pattern "must not be preceded by a dot that is not preceded by a dot."
-      # Attempting to match on (\.{2,})? won't work, because then struct field access can match after the dot.
-      -
-        comment: variables
-        name: variable.other.plonkscript
-        match: \b(?<!(?<!\.)\.)(?:r#(?!(crate|[Ss]elf|super)))?[a-z0-9_]+\b
+      comments:
+            patterns:
+                  - comment: documentation comments
+                    name: comment.line.documentation.plonkscript
+                    match: ^\s*///.*
+                  - comment: line comments
+                    name: comment.line.double-slash.plonkscript
+                    match: \s*//.*
+      block-comments:
+            patterns:
+                  - comment: empty block comments
+                    name: comment.block.plonkscript
+                    match: /\*\*/
+                  - comment: block documentation comments
+                    name: comment.block.documentation.plonkscript
+                    begin: /\*\*
+                    end: \*/
+                    patterns:
+                          - include: "#block-comments"
+                  - comment: block comments
+                    name: comment.block.plonkscript
+                    begin: /\*(?!\*)
+                    end: \*/
+                    patterns:
+                          - include: "#block-comments"
+      constants:
+            patterns:
+                  - comment: ALL CAPS constants
+                    name: constant.other.caps.plonkscript
+                    match: \b[A-Z]{2}[A-Z0-9_]*\b
+                  - comment: constant declarations
+                    match: \b(const)\s+([A-Z][A-Za-z0-9_]*)\b
+                    captures:
+                          "1":
+                                name: storage.type.plonkscript
+                          "2":
+                                name: constant.other.caps.plonkscript
+                  - comment: decimal integers and floats
+                    name: constant.numeric.decimal.plonkscript
+                    match: \b\d[\d_]*(\.?)[\d_]*(?:(E|e)([+-]?)([\d_]+))?(f32|f64|i128|i16|i32|i64|i8|isize|u128|u16|u32|u64|u8|usize)?\b
+                    captures:
+                          "1":
+                                name: punctuation.separator.dot.decimal.plonkscript
+                          "2":
+                                name: keyword.operator.exponent.plonkscript
+                          "3":
+                                name: keyword.operator.exponent.sign.plonkscript
+                          "4":
+                                name: constant.numeric.decimal.exponent.mantissa.plonkscript
+                          "5":
+                                name: entity.name.type.numeric.plonkscript
+                  - comment: hexadecimal integers
+                    name: constant.numeric.hex.plonkscript
+                    match: \b0x[\da-fA-F_]+(i128|i16|i32|i64|i8|isize|u128|u16|u32|u64|u8|usize)?\b
+                    captures:
+                          "1":
+                                name: entity.name.type.numeric.plonkscript
+                  - comment: octal integers
+                    name: constant.numeric.oct.plonkscript
+                    match: \b0o[0-7_]+(i128|i16|i32|i64|i8|isize|u128|u16|u32|u64|u8|usize)?\b
+                    captures:
+                          "1":
+                                name: entity.name.type.numeric.plonkscript
+                  - comment: binary integers
+                    name: constant.numeric.bin.plonkscript
+                    match: \b0b[01_]+(i128|i16|i32|i64|i8|isize|u128|u16|u32|u64|u8|usize)?\b
+                    captures:
+                          "1":
+                                name: entity.name.type.numeric.plonkscript
+                  - comment: booleans
+                    name: constant.language.bool.plonkscript
+                    match: \b(true|false)\b
+      escapes:
+            comment: "escapes: ASCII, byte, Unicode, quote, regex"
+            name: constant.character.escape.plonkscript
+            match: (\\)(?:(?:(x[0-7][0-7a-fA-F])|(u(\{)[\da-fA-F]{4,6}(\}))|.))
+            captures:
+                  "1":
+                        name: constant.character.escape.backslash.plonkscript
+                  "2":
+                        name: constant.character.escape.bit.plonkscript
+                  "3":
+                        name: constant.character.escape.unicode.plonkscript
+                  "4":
+                        name: constant.character.escape.unicode.punctuation.plonkscript
+                  "5":
+                        name: constant.character.escape.unicode.punctuation.plonkscript
+      functions:
+            patterns:
+                  - comment: pub as a function
+                    match: \b(pub)(\()
+                    captures:
+                          "1":
+                                name: keyword.other.plonkscript
+                          "2":
+                                name: punctuation.brackets.round.plonkscript
+                  - comment: function definition
+                    name: meta.function.definition.plonkscript
+                    begin: \b(fn)\s+((?:r#(?!crate|[Ss]elf|super))?[A-Za-z0-9_]+)((\()|(<))
+                    beginCaptures:
+                          "1":
+                                name: keyword.other.fn.plonkscript
+                          "2":
+                                name: entity.name.function.plonkscript
+                          "4":
+                                name: punctuation.brackets.round.plonkscript
+                          "5":
+                                name: punctuation.brackets.angle.plonkscript
+                    end: \{|;
+                    endCaptures:
+                          "0":
+                                name: punctuation.brackets.curly.plonkscript
+                    patterns:
+                          - include: "#block-comments"
+                          - include: "#comments"
+                          - include: "#keywords"
+                          - include: "#lvariables"
+                          - include: "#constants"
+                          - include: "#gtypes"
+                          - include: "#functions"
+                          - include: "#lifetimes"
+                          - include: "#macros"
+                          - include: "#namespaces"
+                          - include: "#punctuation"
+                          - include: "#strings"
+                          - include: "#types"
+                          - include: "#variables"
+                  - comment: function/method calls, chaining
+                    name: meta.function.call.plonkscript
+                    begin: ((?:r#(?!crate|[Ss]elf|super))?[A-Za-z0-9_]+)(\()
+                    beginCaptures:
+                          "1":
+                                name: entity.name.function.plonkscript
+                          "2":
+                                name: punctuation.brackets.round.plonkscript
+                    end: \)
+                    endCaptures:
+                          "0":
+                                name: punctuation.brackets.round.plonkscript
+                    patterns:
+                          - include: "#block-comments"
+                          - include: "#comments"
+                          - include: "#keywords"
+                          - include: "#lvariables"
+                          - include: "#constants"
+                          - include: "#gtypes"
+                          - include: "#functions"
+                          - include: "#lifetimes"
+                          - include: "#macros"
+                          - include: "#namespaces"
+                          - include: "#punctuation"
+                          - include: "#strings"
+                          - include: "#types"
+                          - include: "#variables"
+                  - comment: function/method calls with turbofish
+                    name: meta.function.call.plonkscript
+                    begin: ((?:r#(?!crate|[Ss]elf|super))?[A-Za-z0-9_]+)(?=::<.*>\()
+                    beginCaptures:
+                          "1":
+                                name: entity.name.function.plonkscript
+                    end: \)
+                    endCaptures:
+                          "0":
+                                name: punctuation.brackets.round.plonkscript
+                    patterns:
+                          - include: "#block-comments"
+                          - include: "#comments"
+                          - include: "#keywords"
+                          - include: "#lvariables"
+                          - include: "#constants"
+                          - include: "#gtypes"
+                          - include: "#functions"
+                          - include: "#lifetimes"
+                          - include: "#macros"
+                          - include: "#namespaces"
+                          - include: "#punctuation"
+                          - include: "#strings"
+                          - include: "#types"
+                          - include: "#variables"
+      keywords:
+            patterns:
+                  - comment: control flow keywords
+                    name: keyword.control.plonkscript
+                    match: \b(await|break|continue|do|else|for|if|loop|match|return|try|while|yield)\b
+                  - comment: storage keywords
+                    name: keyword.other.plonkscript storage.type.plonkscript
+                    match: \b(extern|let|macro|mod)\b
+                  - comment: const keyword
+                    name: storage.modifier.plonkscript
+                    match: \b(const)\b
+                  - comment: type keyword
+                    name: keyword.declaration.type.plonkscript storage.type.plonkscript
+                    match: \b(type)\b
+                  - comment: enum keyword
+                    name: keyword.declaration.enum.plonkscript storage.type.plonkscript
+                    match: \b(enum)\b
+                  - comment: trait keyword
+                    name: keyword.declaration.trait.plonkscript storage.type.plonkscript
+                    match: \b(trait)\b
+                  - comment: struct keyword
+                    name: keyword.declaration.struct.plonkscript storage.type.plonkscript
+                    match: \b(struct)\b
+                  - comment: storage modifiers
+                    name: storage.modifier.plonkscript
+                    match: \b(abstract|static)\b
+                  - comment: other keywords
+                    name: keyword.other.plonkscript
+                    match: \b(as|async|become|box|dyn|move|final|impl|in|override|priv|pub|ref|typeof|union|unsafe|unsized|use|virtual|where)\b
+                  - comment: fn
+                    name: keyword.other.fn.plonkscript
+                    match: \bfn\b
+                  - comment: crate
+                    name: keyword.other.crate.plonkscript
+                    match: \bcrate\b
+                  - comment: mut
+                    name: storage.modifier.mut.plonkscript
+                    match: \bmut\b
+                  - comment: logical operators
+                    name: keyword.operator.logical.plonkscript
+                    match: (\^|\||\|\||&&|<<|>>|!)(?!=)
+                  - comment: logical AND, borrow references
+                    name: keyword.operator.borrow.and.plonkscript
+                    match: "&(?![&=])"
+                  - comment: assignment operators
+                    name: keyword.operator.assignment.plonkscript
+                    match: (\+=|-=|\*=|/=|%=|\^=|&=|\|=|<<=|>>=)
+                  - comment: single equal
+                    name: keyword.operator.assignment.equal.plonkscript
+                    match: (?<![<>])=(?!=|>)
+                  - comment: comparison operators
+                    name: keyword.operator.comparison.plonkscript
+                    match: (=(=)?(?!>)|!=|<=|(?<!=)>=)
+                  - comment: math operators
+                    name: keyword.operator.math.plonkscript
+                    match: (([+%]|(\*(?!\w)))(?!=))|(-(?!>))|(/(?!/))
+                  - comment: less than, greater than (special case)
+                    match: (?:\b|(?:(\))|(\])|(\})))[ \t]+([<>])[ \t]+(?:\b|(?:(\()|(\[)|(\{)))
+                    captures:
+                          "1":
+                                name: punctuation.brackets.round.plonkscript
+                          "2":
+                                name: punctuation.brackets.square.plonkscript
+                          "3":
+                                name: punctuation.brackets.curly.plonkscript
+                          "4":
+                                name: keyword.operator.comparison.plonkscript
+                          "5":
+                                name: punctuation.brackets.round.plonkscript
+                          "6":
+                                name: punctuation.brackets.square.plonkscript
+                          "7":
+                                name: punctuation.brackets.curly.plonkscript
+                  - comment: namespace operator
+                    name: keyword.operator.namespace.plonkscript
+                    match: "::"
+                  - comment: dereference asterisk
+                    match: (\*)(?=\w+)
+                    captures:
+                          "1":
+                                name: keyword.operator.dereference.plonkscript
+                  - comment: subpattern binding
+                    name: keyword.operator.subpattern.plonkscript
+                    match: "@"
+                  - comment: dot access
+                    name: keyword.operator.access.dot.plonkscript
+                    match: \.(?!\.)
+                  - comment: ranges, range patterns
+                    name: keyword.operator.range.plonkscript
+                    match: \.{2}(=|\.)?
+                  - comment: colon
+                    name: keyword.operator.key-value.plonkscript
+                    match: :(?!:)
+                  - comment: dashrocket, skinny arrow
+                    name: keyword.operator.arrow.skinny.plonkscript
+                    match: ->
+                  - comment: hashrocket, fat arrow
+                    name: keyword.operator.arrow.fat.plonkscript
+                    match: =>
+                  - comment: dollar macros
+                    name: keyword.operator.macro.dollar.plonkscript
+                    match: \$
+                  - comment: question mark operator, questionably sized, macro kleene matcher
+                    name: keyword.operator.question.plonkscript
+                    match: \?
+                  - comment: assign and constraint
+                    name: keyword.operator.arrow.aac.plonkscript
+                    match: <==
+                  - comment: constraint
+                    name: keyword.operator.arrow.constraint.plonkscript
+                    match: ===
+                  - comment: assign
+                    name: keyword.operator.arrow.assign.plonkscript
+                    match: <--
+                  - comment: gate_assign
+                    name: keyword.operator.arrow.gate_assign.plonkscript
+                    match: <\|
+                  - comment: column modifier
+                    name: keyword.modifier.plonkscript
+                    match: \b(pub|col)\b
+                  - comment: column type
+                    name: keyword.type.plonkscript
+                    match: \b(input|output|advice|selector|fixed|instance)\b
+                  - comment: gate
+                    name: keyword.gate.plonkscript
+                    match: \b(gate)\b
+                  - comment: region
+                    name: keyword.region.plonkscript
+                    match: \b(region)\b
+      interpolations:
+            comment: curly brace interpolations
+            name: meta.interpolation.plonkscript
+            match: ({)[^"{}]*(})
+            captures:
+                  "1":
+                        name: punctuation.definition.interpolation.plonkscript
+                  "2":
+                        name: punctuation.definition.interpolation.plonkscript
+      lifetimes:
+            patterns:
+                  - comment: named lifetime parameters
+                    match: (['])([a-zA-Z_][0-9a-zA-Z_]*)(?!['])\b
+                    captures:
+                          "1":
+                                name: punctuation.definition.lifetime.plonkscript
+                          "2":
+                                name: entity.name.type.lifetime.plonkscript
+                  - comment: borrowing references to named lifetimes
+                    match: (\&)(['])([a-zA-Z_][0-9a-zA-Z_]*)(?!['])\b
+                    captures:
+                          "1":
+                                name: keyword.operator.borrow.plonkscript
+                          "2":
+                                name: punctuation.definition.lifetime.plonkscript
+                          "3":
+                                name: entity.name.type.lifetime.plonkscript
+      macros:
+            patterns:
+                  - comment: macros
+                    name: meta.macro.plonkscript
+                    match: (([a-z_][A-Za-z0-9_]*!)|([A-Z_][A-Za-z0-9_]*!))
+                    captures:
+                          "2":
+                                name: entity.name.function.macro.plonkscript
+                          "3":
+                                name: entity.name.type.macro.plonkscript
+      namespaces:
+            patterns:
+                  - comment: namespace (non-type, non-function path segment)
+                    match: (?<![A-Za-z0-9_])([A-Za-z0-9_]+)((?<!super|self)::)
+                    captures:
+                          "1":
+                                name: entity.name.namespace.plonkscript
+                          "2":
+                                name: keyword.operator.namespace.plonkscript
+      types:
+            patterns:
+                  - comment: numeric types
+                    match: (?<![A-Za-z])(f32|f64|i128|i16|i32|i64|i8|isize|u128|u16|u32|u64|u8|usize)\b
+                    captures:
+                          "1":
+                                name: entity.name.type.numeric.plonkscript
+                  - comment: parameterized types
+                    begin: \b([A-Z][A-Za-z0-9]*)(<)
+                    beginCaptures:
+                          "1":
+                                name: entity.name.type.plonkscript
+                          "2":
+                                name: punctuation.brackets.angle.plonkscript
+                    end: ">"
+                    endCaptures:
+                          "0":
+                                name: punctuation.brackets.angle.plonkscript
+                    patterns:
+                          - include: "#block-comments"
+                          - include: "#comments"
+                          - include: "#keywords"
+                          - include: "#lvariables"
+                          - include: "#lifetimes"
+                          - include: "#punctuation"
+                          - include: "#types"
+                          - include: "#variables"
+                  - comment: primitive types
+                    name: entity.name.type.primitive.plonkscript
+                    match: \b(bool|char|str)\b
+                  - comment: trait declarations
+                    match: \b(trait)\s+([A-Z][A-Za-z0-9]*)\b
+                    captures:
+                          "1":
+                                name: keyword.declaration.trait.plonkscript storage.type.plonkscript
+                          "2":
+                                name: entity.name.type.trait.plonkscript
+                  - comment: struct declarations
+                    match: \b(struct)\s+([A-Z][A-Za-z0-9]*)\b
+                    captures:
+                          "1":
+                                name: keyword.declaration.struct.plonkscript storage.type.plonkscript
+                          "2":
+                                name: entity.name.type.struct.plonkscript
+                  - comment: enum declarations
+                    match: \b(enum)\s+([A-Z][A-Za-z0-9_]*)\b
+                    captures:
+                          "1":
+                                name: keyword.declaration.enum.plonkscript storage.type.plonkscript
+                          "2":
+                                name: entity.name.type.enum.plonkscript
+                  - comment: type declarations
+                    match: \b(type)\s+([A-Z][A-Za-z0-9_]*)\b
+                    captures:
+                          "1":
+                                name: keyword.declaration.type.plonkscript storage.type.plonkscript
+                          "2":
+                                name: entity.name.type.declaration.plonkscript
+                  - comment: types
+                    name: entity.name.type.plonkscript
+                    match: \b[A-Z][A-Za-z0-9]*\b(?!!)
+      gtypes:
+            patterns:
+                  - comment: option types
+                    name: entity.name.type.option.plonkscript
+                    match: \b(Some|None)\b
+                  - comment: result types
+                    name: entity.name.type.result.plonkscript
+                    match: \b(Ok|Err)\b
+      punctuation:
+            patterns:
+                  - comment: comma
+                    name: punctuation.comma.plonkscript
+                    match: ","
+                  - comment: curly braces
+                    name: punctuation.brackets.curly.plonkscript
+                    match: "[{}]"
+                  - comment: parentheses, round brackets
+                    name: punctuation.brackets.round.plonkscript
+                    match: "[()]"
+                  - comment: semicolon
+                    name: punctuation.semi.plonkscript
+                    match: ;
+                  - comment: square brackets
+                    name: punctuation.brackets.square.plonkscript
+                    match: "[\\[\\]]"
+                  - comment: angle brackets
+                    name: punctuation.brackets.angle.plonkscript
+                    match: (?<!=)[<>]
+      strings:
+            patterns:
+                  - comment: double-quoted strings and byte strings
+                    name: string.quoted.double.plonkscript
+                    begin: (b?)(")
+                    beginCaptures:
+                          "1":
+                                name: string.quoted.byte.raw.plonkscript
+                          "2":
+                                name: punctuation.definition.string.plonkscript
+                    end: '"'
+                    endCaptures:
+                          "0":
+                                name: punctuation.definition.string.plonkscript
+                    patterns:
+                          - include: "#escapes"
+                          - include: "#interpolations"
+                  - comment: double-quoted raw strings and raw byte strings
+                    name: string.quoted.double.plonkscript
+                    begin: (b?r)(#*)(")
+                    beginCaptures:
+                          "1":
+                                name: string.quoted.byte.raw.plonkscript
+                          "2":
+                                name: punctuation.definition.string.raw.plonkscript
+                          "3":
+                                name: punctuation.definition.string.plonkscript
+                    end: (")(\2)
+                    endCaptures:
+                          "1":
+                                name: punctuation.definition.string.plonkscript
+                          "2":
+                                name: punctuation.definition.string.raw.plonkscript
+                  - comment: characters and bytes
+                    name: string.quoted.single.char.plonkscript
+                    begin: (b)?(')
+                    beginCaptures:
+                          "1":
+                                name: string.quoted.byte.raw.plonkscript
+                          "2":
+                                name: punctuation.definition.char.plonkscript
+                    end: "'"
+                    endCaptures:
+                          "0":
+                                name: punctuation.definition.char.plonkscript
+                    patterns:
+                          - include: "#escapes"
+      lvariables:
+            patterns:
+                  - comment: self
+                    name: variable.language.self.plonkscript
+                    match: \b[Ss]elf\b
+                  - comment: super
+                    name: variable.language.super.plonkscript
+                    match: \bsuper\b
+      variables:
+            patterns:
+                  - comment: variables
+                    name: variable.other.plonkscript
+                    match: \b(?<!(?<!\.)\.)(?:r#(?!(crate|[Ss]elf|super)))?[a-z0-9_]+\b

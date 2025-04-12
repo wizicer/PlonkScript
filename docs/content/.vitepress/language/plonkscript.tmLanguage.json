@@ -844,7 +844,7 @@
         {
           "comment": "column modifier",
           "name": "keyword.modifier.plonkscript",
-          "match": "\\b(public|private)\\b"
+          "match": "\\b(pub|col)\\b"
         },
         {
           "comment": "column type",
