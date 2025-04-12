@@ -81,17 +81,13 @@
         <template v-slot:body-cell="props">
           <q-td
             :props="props"
-            :class="
-              'bg-' +
-              getColorByColName(props.col.name) +
-              ' ' +
-              getBorderOfRegion(props.value, props.col) +
-              (highlightedCells.includes(
-                getCellId(props.col.name, props.rowIndex)
-              )
-                ? ' highlighted-cell'
-                : '')
-            "
+            :class="[
+              'bg-' + getColorByColName(props.col.name),
+              getBorderOfRegion(props.value, props.col),
+              highlightedCellsMap[getCellId(props.col.name, props.rowIndex)]
+                ? 'highlighted-cell'
+                : '',
+            ]"
             :style="'border-color: ' + rmapcolor[props.value.region] + ';'"
             @mouseenter="highlightRelatedCells(props.col.name, props.rowIndex)"
             @mouseleave="clearHighlightedCells()"
@@ -281,7 +277,7 @@ function getBorderOfRegion(
 }
 
 const cellBadges = ref<Record<string, Record<string, Element>>>({});
-const highlightedCells = ref<string[]>([]);
+const highlightedCellsMap = ref<Record<string, boolean>>({});
 const permutationMap = ref<Record<string, string[]>>({});
 
 function getCellId(colName: string, rowIndex: number): string {
@@ -293,12 +289,17 @@ function highlightRelatedCells(colName: string, rowIndex: number) {
   const relatedCells = permutationMap.value[cellId] || [];
 
   if (relatedCells.length > 0) {
-    highlightedCells.value = [cellId, ...relatedCells];
+    const newMap: Record<string, boolean> = {};
+    newMap[cellId] = true;
+    relatedCells.forEach((cell) => (newMap[cell] = true));
+    highlightedCellsMap.value = newMap;
   }
 }
 
 function clearHighlightedCells() {
-  highlightedCells.value = [];
+  // if empty object, do nothing
+  if (Object.keys(highlightedCellsMap.value).length == 0) return;
+  highlightedCellsMap.value = {};
 }
 
 function buildPermutationMap(data: MockProverData) {
@@ -360,7 +361,7 @@ function loadData(data?: MockProverData) {
   selectedGates.value = [];
   lookups.value = [];
   showOtherColumns.value = false;
-  highlightedCells.value = [];
+  highlightedCellsMap.value = {};
   permutationMap.value = {};
 
   setTimeout(() => {
