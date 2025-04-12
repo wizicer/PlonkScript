@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, ptr::addr_of};
 
 use circuit::MyCircuit;
 use rhai::{Engine, EvalAltResult};
@@ -66,7 +66,7 @@ pub fn try_run(code: String, modules: HashMap<String, String>) -> Result<String,
     }
 
     if cfg!(debug_assertions) && false {
-        let d = unsafe { generator::generate_rust_code(&CONTEXT) };
+        let d = unsafe { generator::generate_rust_code(&*addr_of!(CONTEXT)) };
         let mut file = std::fs::File::create("../export_halo2_project/src/lib.rs").unwrap();
         std::io::Write::write_all(&mut file, d.as_bytes()).unwrap();
     }
