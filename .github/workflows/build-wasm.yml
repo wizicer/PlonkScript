@@ -20,6 +20,7 @@ on:
 
 env:
   VERSION: 0.1.${{ github.run_number }}
+  CARGO_TERM_COLOR: always
 
 jobs:
   build-wasm:
@@ -34,22 +35,34 @@ jobs:
         with:
           version: 'latest'
 
-      - name: Install latest nightly
-        uses: actions-rs/toolchain@v1
+      - name: Install rust toolchain nightly
+        run: rustup override set nightly-2024-04-17
+      
+      - name: Output rust version for verification
+        run: rustup --version
+
+      - name: Add wasm32 target
+        run: rustup target add wasm32-unknown-unknown
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
         with:
-            toolchain: nightly-2024-04-16
-            override: true
-            components: rust-src
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            wasm_binding/target
+          key: ${{ runner.os }}-cargo-wasm-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Build
         run: |
           cd wasm_binding && wasm-pack build --target web --release
 
-      - name: version
+      - name: Add version info
         run: |
           echo ${VERSION}>wasm_binding/pkg/version.txt
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload wasm artifact
+        uses: actions/upload-artifact@v4
         with:
           name: wasm
           path: wasm_binding/pkg
