@@ -44,6 +44,9 @@ jobs:
       - name: Add wasm32 target
         run: rustup target add wasm32-unknown-unknown
 
+      - name: Add rust-src
+        run: rustup component add rust-src
+
       - name: Cache dependencies
         uses: actions/cache@v4
         with:
