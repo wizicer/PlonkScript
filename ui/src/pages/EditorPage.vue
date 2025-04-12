@@ -77,9 +77,9 @@ import { Ref, ref, watch, computed } from 'vue';
 import * as monaco from 'monaco-editor';
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
 import { language, theme } from 'src/services/PlonkScriptLanguage';
-import init, { try_run } from '../transpiler';
+import init, { try_run, TryRunResult } from '../transpiler';
 import { convertMockProverOutputToObject } from 'src/services/MockProverTranslator';
-import { MockProverData, TryRunResult } from 'src/services/ConstraintSystem';
+import { MockProverData } from 'src/services/ConstraintSystem';
 import ConstraintsVisualization from '../components/ConstraintsVisualization.vue';
 
 self.MonacoEnvironment = {
@@ -245,10 +245,10 @@ function runCode() {
     const result = try_run({
       code: mainFile.content,
       modules: modules,
-      include_details: 'all' // Request all details - can be 'none', 'transpiled_script', 'context_debug', or 'all'
+      include_details: 'none'
     });
 
-    tryRunResult.value = result as TryRunResult;
+    tryRunResult.value = result;
 
     vis.value = convertMockProverOutputToObject(result.prover_result);
   } catch (error) {

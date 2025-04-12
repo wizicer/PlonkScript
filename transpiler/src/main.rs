@@ -31,7 +31,7 @@ fn resolve_lib_modules() -> HashMap<String, String> {
 pub fn main() -> Result<(), Box<EvalAltResult>> {
     let modules = resolve_lib_modules();
     let code = fs::read_to_string("plonk/src/simple_demo.plonk").expect("read file failed");
-    let output = try_run(code, modules);
+    let output = try_run(code, modules, Some(transpiler::IncludeDetails::All));
     match output {
         Ok(_) => {
             println!("Done");

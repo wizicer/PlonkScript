@@ -1,7 +1,32 @@
 #![allow(unused_variables)]
 
+use wasm_bindgen::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::panic;
+
+#[wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = r#"
+export interface TryRunRequest {
+  code: string;
+  modules?: Record<string, string>;
+  include_details?: "none" | "transpiled_script" | "context_debug" | "all";
+}
+
+export interface TryRunResult {
+  prover_result: string;
+  transpiled_script: string;
+  context_debug: string;
+}
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "TryRunRequest")]
+    pub type TypedTryRunRequest;
+
+    #[wasm_bindgen(typescript_type = "TryRunResult")]
+    pub type TypedTryRunResult;
+}
 
 #[derive(Serialize, Deserialize)]
 pub struct TryRunRequest {
@@ -45,8 +70,9 @@ fn main() {
     }
 
     #[wasm_bindgen]
-    pub fn try_run(request: JsValue) -> Result<JsValue, JsValue> {
-        let req: TryRunRequest = serde_wasm_bindgen::from_value(request)?;
+    pub fn try_run(request: TypedTryRunRequest) -> Result<TypedTryRunResult, JsValue> {
+        let request_js_value: JsValue = request.into();
+        let req: TryRunRequest = serde_wasm_bindgen::from_value(request_js_value)?;
         // log(&format!("try_run!"));
         
         let include_details = match req.include_details.as_deref() {
@@ -58,11 +84,13 @@ fn main() {
         };
         
         match transpiler::try_run(req.code, req.modules, include_details) {
-            Ok(result) => Ok(serde_wasm_bindgen::to_value(&TryRunResult {
-                prover_result: result.prover_result,
-                transpiled_script: result.transpiled_script,
-                context_debug: result.context_debug,
-            }).unwrap()),
+            Ok(result) => Ok(TypedTryRunResult {
+                obj: serde_wasm_bindgen::to_value(&TryRunResult {
+                    prover_result: result.prover_result,
+                    transpiled_script: result.transpiled_script,
+                    context_debug: result.context_debug,
+                }).unwrap(),
+            }),
             Err(d) => Err(JsValue::from_str(d.to_string().as_str())),
         }
     }
