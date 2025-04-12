@@ -605,7 +605,9 @@ export function buildPermutationMap(data: MockProverDataPermutation) {
         permutationMap[toCellId] = [];
       }
 
+      if (!permutationMap[fromCellId].includes(toCellId))
       permutationMap[fromCellId].push(toCellId);
+      if (!permutationMap[toCellId].includes(fromCellId))
       permutationMap[toCellId].push(fromCellId);
     }
   }
