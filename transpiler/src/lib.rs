@@ -65,7 +65,7 @@ pub fn try_run(code: String, modules: HashMap<String, String>) -> Result<String,
         std::io::Write::write_all(&mut file, d.as_bytes()).unwrap();
     }
 
-    if cfg!(debug_assertions) {
+    if cfg!(debug_assertions) && false {
         let d = unsafe { generator::generate_rust_code(&CONTEXT) };
         let mut file = std::fs::File::create("../export_halo2_project/src/lib.rs").unwrap();
         std::io::Write::write_all(&mut file, d.as_bytes()).unwrap();
