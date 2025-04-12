@@ -151,8 +151,8 @@ import {
   RegionInfoEntity,
   LookupLiteralExpression,
   RowsAndRegionsResponse,
-  ColumnType,
   formularize,
+  buildPermutationMap
 } from 'src/services/ConstraintSystem';
 import { registerGateLanguage } from 'src/services/GateLanguage';
 import hljs from 'highlight.js';
@@ -302,53 +302,6 @@ function clearHighlightedCells() {
   highlightedCellsMap.value = {};
 }
 
-function buildPermutationMap(data: MockProverData) {
-  if (rows.value.length > 1024) {
-    console.warn(
-      `rows is too many [${rows.value.length}], skip building permutation map`
-    );
-    return;
-  }
-
-  const mapping = data.permutation.mapping;
-  // ignore mapping when it's large
-  if (mapping.reduce((pv, cv) => pv + cv.length, 0) > 500) return;
-  const cols = data.permutation.columns;
-  permutationMap.value = {};
-
-  for (let c = 0; c < mapping.length; c++) {
-    const mcol = mapping[c];
-    for (let r = 0; r < mcol.length; r++) {
-      const mrow = mcol[r];
-      const col = Number(mrow[0]);
-      const row = Number(mrow[1]);
-
-      // from pointed address(col, row) to current cell(c, r)
-      const tocolname = getColumnName(cols[c]);
-      const fromcolname = getColumnName(cols[col]);
-      if (fromcolname == tocolname && row == r) continue;
-
-      const fromCellId = getCellId(fromcolname, row);
-      const toCellId = getCellId(tocolname, r);
-
-      // Build bidirectional mapping
-      if (!permutationMap.value[fromCellId]) {
-        permutationMap.value[fromCellId] = [];
-      }
-      if (!permutationMap.value[toCellId]) {
-        permutationMap.value[toCellId] = [];
-      }
-
-      permutationMap.value[fromCellId].push(toCellId);
-      permutationMap.value[toCellId].push(fromCellId);
-    }
-  }
-}
-
-function getColumnName(col: ColumnType): string {
-  return `${col.column_type.toLowerCase()}-${col.index}`;
-}
-
 function loadData(data?: MockProverData) {
   if (!data) {
     console.warn('empty data');
@@ -417,7 +370,7 @@ function loadData(data?: MockProverData) {
       )
       .map((_) => _.name);
 
-    buildPermutationMap(data);
+    permutationMap.value = buildPermutationMap(data.permutation);
   }, 100);
 }
 

@@ -577,28 +577,10 @@ function tryShortenValue(value: string, maxLength: number): string {
   }
 }
 
-export function getPermutationLines(
-  data: MockProverData,
-  cellBadges: Record<string, Record<string, Element>>,
-  columns: QTableColumn[],
-  rows: Record<string, RowField>[]
-): {
-  from: Element;
-  to: Element;
-  equal: boolean;
-  fromValue: string | undefined;
-  toValue: string | undefined;
-}[] {
-  const colDict: Record<string, string> = columns.reduce(
-    (pv, cv) => ({ ...pv, [cv.name]: cv.field }),
-    {}
-  );
-
-  const mapping = data.permutation.mapping;
-  // ignore mapping when it's large
-  if (mapping.reduce((pv, cv) => pv + cv.length, 0) > 500) return [];
-  const cols = data.permutation.columns;
-  const lines = [];
+export function buildPermutationMap(data: MockProverDataPermutation) {
+  const mapping = data.mapping;
+  const cols = data.columns;
+  const permutationMap: Record<string, string[]> = {};
 
   for (let c = 0; c < mapping.length; c++) {
     const mcol = mapping[c];
@@ -611,19 +593,28 @@ export function getPermutationLines(
       const tocolname = getColumnName(cols[c]);
       const fromcolname = getColumnName(cols[col]);
       if (fromcolname == tocolname && row == r) continue;
-      const from = cellBadges[fromcolname][row];
-      const to = cellBadges[tocolname][r];
 
-      let fromValue = rows[row][colDict[fromcolname]].value;
-      fromValue = Array.isArray(fromValue) ? fromValue.join(', ') : fromValue;
-      let toValue = rows[r][colDict[tocolname]].value;
-      toValue = Array.isArray(toValue) ? toValue.join(', ') : toValue;
+      const fromCellId = getCellId(fromcolname, row);
+      const toCellId = getCellId(tocolname, r);
 
-      lines.push({ from, to, equal: fromValue == toValue, fromValue, toValue });
+      // Build bidirectional mapping
+      if (!permutationMap[fromCellId]) {
+        permutationMap[fromCellId] = [];
+      }
+      if (!permutationMap[toCellId]) {
+        permutationMap[toCellId] = [];
+      }
+
+      permutationMap[fromCellId].push(toCellId);
+      permutationMap[toCellId].push(fromCellId);
     }
   }
 
-  return lines;
+  return permutationMap;
+}
+
+function getCellId(colName: string, rowIndex: number): string {
+  return `${colName}-${rowIndex}`;
 }
 
 function getColumnName(col: ColumnType): string {
