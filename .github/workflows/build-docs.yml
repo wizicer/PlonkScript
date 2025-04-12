@@ -27,12 +27,12 @@ jobs:
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Set Node.js 18.x
-        uses: actions/setup-node@v3
+      - name: Set Node.js 22.x
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 22
           cache: "yarn"
           cache-dependency-path: "yarn.lock"
 
@@ -41,7 +41,7 @@ jobs:
 
       - name: Download ui
         id: download-artifact
-        uses: dawidd6/action-download-artifact@v2
+        uses: dawidd6/action-download-artifact@v9
         with:
           name: ui
           workflow: build-ui.yml
@@ -55,7 +55,7 @@ jobs:
         run: |
           echo ${VERSION}>docs/content/.vitepress/dist/version.txt
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: docs
           path: docs/content/.vitepress/dist
