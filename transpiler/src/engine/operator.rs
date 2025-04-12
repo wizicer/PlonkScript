@@ -2,7 +2,7 @@ use num_bigint::BigInt;
 use num_traits::cast::ToPrimitive;
 use std::str::FromStr;
 
-use crate::system::*;
+use crate::system::{cell_expression::ToValueString, *};
 
 // operators
 // Cell/CellExpression/Column/String/i64
@@ -67,6 +67,7 @@ pub fn register_operator(engine: &mut rhai::Engine) {
     engine_register_ops_types!(engine, -, operator_minus);
     engine_register_ops_types!(engine, *, operator_mul);
     engine_register_ops_types_i64!(engine, "**", operator_pow);
+    engine_register_ops_types!(engine, /, operator_divide);
 
     // to calculated value
     engine.register_fn(">>", |t1: String, t2: i64| {
@@ -118,6 +119,13 @@ fn operator_pow<T1: ToCellExpression>(a: T1, b: i64) -> CellExpression {
         exp = CellExpression::Product(Box::new(exp), Box::new(origin_exp.clone()));
     }
     exp
+}
+
+fn operator_divide<T1: ToCellExpression, T2: ToCellExpression>(a: T1, b: T2) -> CellExpression {
+    CellExpression::Constant(
+        (BigInt::from_str(&a.to_cell_expression().to_value_string().unwrap()).unwrap()
+            / BigInt::from_str(&b.to_cell_expression().to_value_string().unwrap()).unwrap()).to_string(),
+    )
 }
 
 #[derive(Debug, Clone)]

@@ -77,7 +77,7 @@ fn format_assignment(code: String) -> String {
         \s*
         (?P<assignment><==|<--|===)
         \s*
-        (?P<from>[\w\d\[\]+\-*\x20_\(\)^&|><]+?)
+        (?P<from>[\w\d\[\]+\-*\/\x20_\(\)^&|><]+?)
         \s*
         ;",
     )
