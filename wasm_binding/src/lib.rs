@@ -8,6 +8,8 @@ pub struct TryRunRequest {
     pub code: String,
     #[serde(default)]
     pub modules: std::collections::HashMap<String, String>,
+    #[serde(default)]
+    pub include_details: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -47,7 +49,15 @@ fn main() {
         let req: TryRunRequest = serde_wasm_bindgen::from_value(request)?;
         // log(&format!("try_run!"));
         
-        match transpiler::try_run(req.code, req.modules) {
+        let include_details = match req.include_details.as_deref() {
+            Some("none") => Some(transpiler::IncludeDetails::None),
+            Some("transpiled_script") => Some(transpiler::IncludeDetails::TranspiledScript),
+            Some("context_debug") => Some(transpiler::IncludeDetails::ContextDebug),
+            Some("all") => Some(transpiler::IncludeDetails::All),
+            _ => None, // Default to None if not specified or invalid
+        };
+        
+        match transpiler::try_run(req.code, req.modules, include_details) {
             Ok(result) => Ok(serde_wasm_bindgen::to_value(&TryRunResult {
                 prover_result: result.prover_result,
                 transpiled_script: result.transpiled_script,

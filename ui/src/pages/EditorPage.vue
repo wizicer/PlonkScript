@@ -245,12 +245,12 @@ function runCode() {
     const result = try_run({
       code: mainFile.content,
       modules: modules,
+      include_details: 'all' // Request all details - can be 'none', 'transpiled_script', 'context_debug', or 'all'
     });
 
     tryRunResult.value = result as TryRunResult;
-    const resultJson = tryRunResult.value.prover_result;
 
-    vis.value = convertMockProverOutputToObject(resultJson);
+    vis.value = convertMockProverOutputToObject(result.prover_result);
   } catch (error) {
     console.error('Error running code:', error);
   }

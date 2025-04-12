@@ -33,7 +33,18 @@ pub struct TryRunResult {
     pub context_debug: String,
 }
 
-pub fn try_run(code: String, modules: HashMap<String, String>) -> Result<TryRunResult, Box<EvalAltResult>> {
+pub enum IncludeDetails {
+    None,
+    TranspiledScript,
+    ContextDebug,
+    All,
+}
+
+pub fn try_run(
+    code: String, 
+    modules: HashMap<String, String>,
+    include_details: Option<IncludeDetails>
+) -> Result<TryRunResult, Box<EvalAltResult>> {
     unsafe {
         CONTEXT = SimplifiedConstraitSystem {
             // ..Default::default()
@@ -64,7 +75,18 @@ pub fn try_run(code: String, modules: HashMap<String, String>) -> Result<TryRunR
         return Err(error);
     }
 
-    let context_debug = unsafe { format!("{:#?}", CONTEXT) };
+    let transpiled_script = if matches!(include_details, Some(IncludeDetails::TranspiledScript | IncludeDetails::All)) {
+        transpiled_script.clone()
+    } else {
+        String::new()
+    };
+
+    let context_debug = if matches!(include_details, Some(IncludeDetails::ContextDebug | IncludeDetails::All)) {
+        unsafe { format!("{:#?}", CONTEXT) }
+    } else {
+        String::new()
+    };
+
     if cfg!(debug_assertions) {
         let mut file = std::fs::File::create("context.rust").unwrap();
         std::io::Write::write_all(&mut file, context_debug.as_bytes()).unwrap();
