@@ -13,6 +13,8 @@ pub mod engine;
 pub mod generator;
 pub mod system;
 pub mod transpiler;
+#[cfg(test)]
+mod tests;
 
 static mut CONTEXT: SimplifiedConstraitSystem = SimplifiedConstraitSystem {
     // ..Default::default()
